@@ -144,6 +144,88 @@ function PdfTemplateCanvas({ url, width, height }: { url: string; width: number;
   );
 }
 
+/**
+ * Universal Template Canvas:
+ * Automatically probes whether the uploaded template URL is a JPG/PNG image or a PDF document,
+ * and renders it reliably regardless of file extension or URL structure (e.g. UploadThing hashes).
+ */
+function UniversalTemplateCanvas({ url, width, height }: { url: string; width: number; height: number }) {
+  const [renderType, setRenderType] = useState<'loading' | 'image' | 'pdf' | 'fallback'>('loading');
+
+  useEffect(() => {
+    if (!url) {
+      setRenderType('fallback');
+      return;
+    }
+
+    let isMounted = true;
+    setRenderType('loading');
+
+    // 1. Fast check file extension
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    if (cleanUrl.endsWith('.jpg') || cleanUrl.endsWith('.jpeg') || cleanUrl.endsWith('.png') || cleanUrl.endsWith('.webp') || cleanUrl.endsWith('.svg')) {
+      setRenderType('image');
+      return;
+    }
+    if (cleanUrl.endsWith('.pdf')) {
+      setRenderType('pdf');
+      return;
+    }
+
+    // 2. Dynamic probe: test if browser can load it as an image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      if (isMounted) setRenderType('image');
+    };
+
+    img.onerror = () => {
+      // If it fails to load as an image, load via PDF.js renderer
+      if (isMounted) setRenderType('pdf');
+    };
+
+    img.src = url;
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  if (renderType === 'image') {
+    return (
+      <img
+        src={url}
+        alt="Certificate Template"
+        className="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0"
+      />
+    );
+  }
+
+  if (renderType === 'pdf') {
+    return <PdfTemplateCanvas url={url} width={width} height={height} />;
+  }
+
+  if (renderType === 'loading') {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
+        <div className="spinner" style={{ width: '24px', height: '24px' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 pointer-events-none opacity-30">
+      <div className="text-3xl font-extrabold tracking-wider uppercase text-[#7367f0] border-2 border-[#7367f0] px-6 py-2 mb-2">
+        Certificate Template
+      </div>
+      <p className="text-xs text-[#6f6b7d]">
+        Upload a PDF or image background in Step 2 to preview actual design
+      </p>
+    </div>
+  );
+}
+
 export default function FieldEditor({
   fields,
   onChange,
@@ -379,14 +461,6 @@ export default function FieldEditor({
 
   const selectedField = selectedIdx !== null ? fields[selectedIdx] : null;
 
-  const isImage = !!templateUrl && (
-    templateUrl.toLowerCase().endsWith('.png') ||
-    templateUrl.toLowerCase().endsWith('.jpg') ||
-    templateUrl.toLowerCase().endsWith('.jpeg') ||
-    templateUrl.toLowerCase().endsWith('.webp') ||
-    templateUrl.toLowerCase().endsWith('.svg')
-  );
-
   return (
     <div className="space-y-4">
       {/* Top Studio Toolbar */}
@@ -494,33 +568,12 @@ export default function FieldEditor({
             className="materio-card relative bg-white border border-[#b5b3be] shadow-xl select-none flex-shrink-0 overflow-hidden"
             onClick={() => setSelectedIdx(null)}
           >
-            {/* Template Background Layer: Pixel-Perfect HTML5 Canvas vs Image */}
-            {templateUrl ? (
-              isImage ? (
-                <img
-                  src={templateUrl}
-                  alt="Certificate Background"
-                  className="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0"
-                />
-              ) : (
-                /* PDF Template rendered cleanly onto HTML5 canvas with zero browser plugin padding */
-                <PdfTemplateCanvas
-                  url={templateUrl}
-                  width={CANVAS_WIDTH}
-                  height={CANVAS_HEIGHT}
-                />
-              )
-            ) : (
-              /* Watermark Placeholder if no template uploaded */
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 pointer-events-none opacity-30">
-                <div className="text-3xl font-extrabold tracking-wider uppercase text-[#7367f0] border-2 border-[#7367f0] px-6 py-2 mb-2">
-                  Certificate Template
-                </div>
-                <p className="text-xs text-[#6f6b7d]">
-                  Upload a PDF or image background in Step 2 to preview actual design
-                </p>
-              </div>
-            )}
+            {/* Template Background Layer: Auto-detects JPG, PNG, and PDF templates */}
+            <UniversalTemplateCanvas
+              url={templateUrl || ''}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+            />
 
             {/* Grid Overlay if enabled */}
             {snapToGrid && (

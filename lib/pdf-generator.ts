@@ -58,23 +58,48 @@ export async function generateCertificatePDF(options: GenerateCertificateOptions
         throw new Error(`Failed to fetch template: ${response.status}`);
       }
       const templateBytes = await response.arrayBuffer();
+      const bytes = new Uint8Array(templateBytes);
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('pdf')) {
+      // Check magic bytes:
+      // PDF: %PDF (0x25, 0x50, 0x44, 0x46)
+      const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+      // PNG: \x89PNG (0x89, 0x50, 0x4E, 0x47)
+      const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+      // JPG/JPEG: 0xFF 0xD8 0xFF
+      const isJpg = bytes[0] === 0xFF && bytes[1] === 0xD8;
+
+      if (isPdf) {
         pdfDoc = await PDFDocument.load(templateBytes);
-      } else if (contentType.includes('image')) {
+      } else if (isPng) {
         pdfDoc = await PDFDocument.create();
-        let image;
-        if (contentType.includes('png')) {
-          image = await pdfDoc.embedPng(templateBytes);
-        } else {
-          image = await pdfDoc.embedJpg(templateBytes);
-        }
+        const image = await pdfDoc.embedPng(templateBytes);
+        const { width, height } = image.scale(1);
+        const page = pdfDoc.addPage([width, height]);
+        page.drawImage(image, { x: 0, y: 0, width, height });
+      } else if (isJpg) {
+        pdfDoc = await PDFDocument.create();
+        const image = await pdfDoc.embedJpg(templateBytes);
         const { width, height } = image.scale(1);
         const page = pdfDoc.addPage([width, height]);
         page.drawImage(image, { x: 0, y: 0, width, height });
       } else {
-        pdfDoc = await PDFDocument.load(templateBytes);
+        // Fallback: try loading as PDF, if fails try embedding as image
+        try {
+          pdfDoc = await PDFDocument.load(templateBytes);
+        } catch {
+          pdfDoc = await PDFDocument.create();
+          try {
+            const image = await pdfDoc.embedJpg(templateBytes);
+            const { width, height } = image.scale(1);
+            const page = pdfDoc.addPage([width, height]);
+            page.drawImage(image, { x: 0, y: 0, width, height });
+          } catch {
+            const image = await pdfDoc.embedPng(templateBytes);
+            const { width, height } = image.scale(1);
+            const page = pdfDoc.addPage([width, height]);
+            page.drawImage(image, { x: 0, y: 0, width, height });
+          }
+        }
       }
     } catch (err) {
       console.error('Error loading template from URL:', err);
