@@ -1,0 +1,333 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── USER ───────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ORG_ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organizationMembers OrganizationMember[]
+  auditLogs           AuditLog[]
+
+  @@map("users")
+}
+
+// ─── ORGANIZATION ───────────────────────────────────────────────────────────────
+
+enum OrgStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  logo      String?
+  email     String?
+  status    OrgStatus @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  members   OrganizationMember[]
+  events    Event[]
+  auditLogs AuditLog[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           Role         @default(ORG_ADMIN)
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_members")
+}
+
+// ─── EVENT ──────────────────────────────────────────────────────────────────────
+
+enum EventStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+model Event {
+  id             String      @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  logo           String?
+  publicSlug     String      @unique
+  status         EventStatus @default(ACTIVE)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  certificates Certificate[]
+  auditLogs    AuditLog[]
+
+  @@map("events")
+}
+
+// ─── CERTIFICATE ────────────────────────────────────────────────────────────────
+
+enum CertificateStatus {
+  DRAFT
+  VALIDATING
+  READY
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+model Certificate {
+  id          String            @id @default(uuid())
+  eventId     String
+  name        String
+  status      CertificateStatus @default(DRAFT)
+  publicSlug  String            @unique
+  publishedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  event     Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  template  CertificateTemplate?
+  fields    CertificateField[]
+  datasets  Dataset[]
+  mappings  FieldMapping[]
+  formFields FormField[]
+  recipients Recipient[]
+  generatedCertificates GeneratedCertificate[]
+
+  @@map("certificates")
+}
+
+// ─── CERTIFICATE TEMPLATE ───────────────────────────────────────────────────────
+
+model CertificateTemplate {
+  id            String   @id @default(uuid())
+  certificateId String   @unique
+  fileKey       String   // path to template PDF or background image
+  metadata      Json?    // page size, orientation, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  certificate Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  @@map("certificate_templates")
+}
+
+// ─── CERTIFICATE FIELD ──────────────────────────────────────────────────────────
+
+enum FieldType {
+  TEXT
+  DATE
+  NUMBER
+  EMAIL
+  URL
+}
+
+enum Alignment {
+  LEFT
+  CENTER
+  RIGHT
+}
+
+model CertificateField {
+  id            String    @id @default(uuid())
+  certificateId String
+  name          String    // e.g. "student_name"
+  label         String    // e.g. "Student Name"
+  type          FieldType @default(TEXT)
+  positionX     Float     @default(0)
+  positionY     Float     @default(0)
+  width         Float     @default(200)
+  height        Float     @default(30)
+  fontFamily    String    @default("Helvetica")
+  fontSize      Int       @default(16)
+  fontColor     String    @default("#000000")
+  alignment     Alignment @default(CENTER)
+  required      Boolean   @default(false)
+  sortOrder     Int       @default(0)
+
+  certificate Certificate    @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  mappings    FieldMapping[]
+
+  @@map("certificate_fields")
+}
+
+// ─── DATASET ────────────────────────────────────────────────────────────────────
+
+enum DatasetStatus {
+  UPLOADED
+  PROCESSED
+  ERROR
+}
+
+model Dataset {
+  id            String        @id @default(uuid())
+  certificateId String
+  fileKey       String        // path to uploaded CSV/XLSX
+  fileName      String
+  fileType      String        // "csv" | "xlsx"
+  status        DatasetStatus @default(UPLOADED)
+  rowCount      Int           @default(0)
+  uploadedAt    DateTime      @default(now())
+
+  certificate Certificate     @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  columns     DatasetColumn[]
+
+  @@map("datasets")
+}
+
+model DatasetColumn {
+  id          String @id @default(uuid())
+  datasetId   String
+  columnName  String
+  dataType    String @default("string")
+  columnIndex Int
+
+  dataset    Dataset        @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  mappings   FieldMapping[]
+  formFields FormField[]
+
+  @@map("dataset_columns")
+}
+
+// ─── FIELD MAPPING ──────────────────────────────────────────────────────────────
+
+model FieldMapping {
+  id                 String @id @default(uuid())
+  certificateId      String
+  datasetColumnId    String
+  certificateFieldId String
+
+  certificate      Certificate      @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  datasetColumn    DatasetColumn    @relation(fields: [datasetColumnId], references: [id], onDelete: Cascade)
+  certificateField CertificateField @relation(fields: [certificateFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([certificateId, certificateFieldId])
+  @@map("field_mappings")
+}
+
+// ─── FORM FIELD ─────────────────────────────────────────────────────────────────
+
+model FormField {
+  id              String  @id @default(uuid())
+  certificateId   String
+  datasetColumnId String
+  label           String
+  inputType       String  @default("text")
+  required        Boolean @default(true)
+  sortOrder       Int     @default(0)
+
+  certificate   Certificate   @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  datasetColumn DatasetColumn @relation(fields: [datasetColumnId], references: [id], onDelete: Cascade)
+
+  @@map("form_fields")
+}
+
+// ─── RECIPIENT ──────────────────────────────────────────────────────────────────
+
+model Recipient {
+  id            String   @id @default(uuid())
+  certificateId String
+  externalId    String?  // optional external reference
+  data          Json     // the full row data as JSON { "Name": "...", "Email": "...", ... }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  certificate           Certificate            @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  generatedCertificates GeneratedCertificate[]
+
+  @@map("recipients")
+}
+
+// ─── GENERATED CERTIFICATE ──────────────────────────────────────────────────────
+// We track generation metadata, but do NOT store PDFs permanently.
+// PDFs are generated on-the-fly with pdf-lib.
+
+enum GenCertStatus {
+  GENERATED
+  ERROR
+}
+
+model GeneratedCertificate {
+  id                String        @id @default(uuid())
+  certificateId     String
+  recipientId       String
+  certificateNumber String        @unique
+  fileKey           String?       // optional, not used for permanent storage
+  status            GenCertStatus @default(GENERATED)
+  generatedAt       DateTime      @default(now())
+
+  certificate  Certificate   @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  recipient    Recipient     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  downloadLogs DownloadLog[]
+
+  @@map("generated_certificates")
+}
+
+// ─── DOWNLOAD LOG ───────────────────────────────────────────────────────────────
+
+model DownloadLog {
+  id                     String   @id @default(uuid())
+  generatedCertificateId String
+  downloadedAt           DateTime @default(now())
+  ipAddress              String?
+  userAgent              String?
+  referrer               String?
+
+  generatedCertificate GeneratedCertificate @relation(fields: [generatedCertificateId], references: [id], onDelete: Cascade)
+
+  @@map("download_logs")
+}
+
+// ─── AUDIT LOG ──────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  userId         String?
+  organizationId String?
+  eventId        String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
