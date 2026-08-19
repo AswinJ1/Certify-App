@@ -78,10 +78,18 @@ export async function generateCertificatePDF(options: GenerateCertificateOptions
         page.drawImage(image, { x: 0, y: 0, width, height });
       } else if (isJpg) {
         pdfDoc = await PDFDocument.create();
-        const image = await pdfDoc.embedJpg(templateBytes);
-        const { width, height } = image.scale(1);
-        const page = pdfDoc.addPage([width, height]);
-        page.drawImage(image, { x: 0, y: 0, width, height });
+        try {
+          const image = await pdfDoc.embedJpg(templateBytes);
+          const { width, height } = image.scale(1);
+          const page = pdfDoc.addPage([width, height]);
+          page.drawImage(image, { x: 0, y: 0, width, height });
+        } catch {
+          // In case of progressive JPG, fallback to PNG embedding if possible
+          const image = await pdfDoc.embedPng(templateBytes);
+          const { width, height } = image.scale(1);
+          const page = pdfDoc.addPage([width, height]);
+          page.drawImage(image, { x: 0, y: 0, width, height });
+        }
       } else {
         // Fallback: try loading as PDF, if fails try embedding as image
         try {
@@ -182,43 +190,57 @@ export async function generateCertificatePDF(options: GenerateCertificateOptions
   for (const field of certificate.fields) {
     const rawVal = valueMap[field.name] || '';
     if (!rawVal) continue;
-    const value = String(rawVal).trim();
+    const value = sanitizeForWinAnsi(String(rawVal).trim());
     if (!value) continue;
 
-    const font = fontMap[field.fontFamily] || (field.fontFamily?.includes('Bold') ? helveticaBold : helvetica);
-    const scaledFontSize = Math.max(8, Math.round((field.fontSize || 16) * scaleY));
-    const color = hexToRgb(field.fontColor || '#000000');
+    try {
+      const font = fontMap[field.fontFamily] || (field.fontFamily?.includes('Bold') ? helveticaBold : helvetica);
+      const scaledFontSize = Math.max(8, Math.round((field.fontSize || 16) * scaleY));
+      const color = hexToRgb(field.fontColor || '#000000');
 
-    // Scale bounding box coordinates from 842x595 canvas to actual PDF page dimensions
-    const boxX = (field.positionX || 0) * scaleX;
-    const boxY = (field.positionY || 0) * scaleY;
-    const boxW = (field.width || 200) * scaleX;
-    const boxH = (field.height || 36) * scaleY;
+      // Scale bounding box coordinates from 842x595 canvas to actual PDF page dimensions
+      const boxX = (field.positionX || 0) * scaleX;
+      const boxY = (field.positionY || 0) * scaleY;
+      const boxW = (field.width || 200) * scaleX;
+      const boxH = (field.height || 36) * scaleY;
 
-    // In PDF coordinates, (0, 0) is bottom-left.
-    // In Canvas coordinates, (0, 0) is top-left.
-    // Text baseline is placed at vertical center of box:
-    const y = pageHeight - boxY - (boxH / 2) - (scaledFontSize * 0.35);
+      // In PDF coordinates, (0, 0) is bottom-left.
+      // In Canvas coordinates, (0, 0) is top-left.
+      // Text baseline is placed at vertical center of box:
+      const y = pageHeight - boxY - (boxH / 2) - (scaledFontSize * 0.35);
 
-    // Calculate horizontal alignment within box width
-    const textWidth = font.widthOfTextAtSize(value, scaledFontSize);
-    let x = boxX;
-    if (field.alignment === 'CENTER') {
-      x = boxX + (boxW - textWidth) / 2;
-    } else if (field.alignment === 'RIGHT') {
-      x = boxX + boxW - textWidth;
+      // Calculate horizontal alignment within box width
+      const textWidth = font.widthOfTextAtSize(value, scaledFontSize);
+      let x = boxX;
+      if (field.alignment === 'CENTER') {
+        x = boxX + (boxW - textWidth) / 2;
+      } else if (field.alignment === 'RIGHT') {
+        x = boxX + boxW - textWidth;
+      }
+
+      page.drawText(value, {
+        x: Math.max(0, x),
+        y: Math.max(0, y),
+        size: scaledFontSize,
+        font,
+        color: rgb(color.r, color.g, color.b),
+      });
+    } catch (drawErr) {
+      console.error(`Error drawing field ${field.name}:`, drawErr);
     }
-
-    page.drawText(value, {
-      x: Math.max(0, x),
-      y: Math.max(0, y),
-      size: scaledFontSize,
-      font,
-      color: rgb(color.r, color.g, color.b),
-    });
   }
 
   return await pdfDoc.save();
+}
+
+function sanitizeForWinAnsi(str: string): string {
+  return str
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u2026]/g, '...')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[^\x00-\x7F\xA0-\xFF]/g, ''); // strip characters outside standard WinAnsi encoding
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {

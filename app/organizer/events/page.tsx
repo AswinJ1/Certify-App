@@ -85,7 +85,7 @@ export default function OrganizerEventsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl text-black">Organization Events</h1>
-          <p className="text-xs text-black mt-0.5">
+          <p className=" text-black mt-0.5">
             Conferences, workshops, hackathons, and programs hosted by your organization
           </p>
         </div>
@@ -122,25 +122,25 @@ export default function OrganizerEventsPage() {
                 {/* Header Banner with Logo or Icon */}
                 <div className="p-4 border-b border-[#ebebed] bg-[#f8f7fa]">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-black">{event.status}</span>
+                    {/* <span className="text-xs text-black">{event.status}</span> */}
                     {event.logo ? (
                       <img src={event.logo} alt={event.name} className="h-7 max-w-[80px] object-contain" />
                     ) : (
                       <Calendar className="w-4 h-4 text-[#a5a2ad]" />
                     )}
                   </div>
-                  <h3 className="text-sm text-black mt-2 truncate">
+                  <h3 className=" text-black mt-2 truncate">
                     {event.name}
                   </h3>
                 </div>
 
                 <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <p className="text-xs text-black line-clamp-2">
+                  <p className=" text-black line-clamp-2">
                     {event.description || 'No description provided.'}
                   </p>
 
                   <div className="space-y-2 pt-2 border-t border-[#ebebed]">
-                    <div className="flex items-center justify-between text-xs text-black">
+                    <div className="flex items-center justify-between text-black">
                       <span className="flex items-center gap-1.5">
                         <Award className="w-3.5 h-3.5 text-[#a5a2ad]" />
                         <span>Certificates</span>
@@ -149,18 +149,18 @@ export default function OrganizerEventsPage() {
                     </div>
 
                     {(event.startDate || event.endDate) && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-[#6f6b7d]">
-                        <Clock className="w-3 h-3 text-[#a5a2ad]" />
+                      <div className="flex items-center gap-1.5  ">
+                        {/* <Clock className="w-3 h-3 text-[#a5a2ad]" /> */}
                         <span>
-                          {event.startDate ? new Date(event.startDate).toLocaleDateString() : ''}
-                          {event.endDate ? ` — ${new Date(event.endDate).toLocaleDateString()}` : ''}
+                          {event.startDate ? new Date(event.startDate).toLocaleDateString() : ''} 
+                          {event.endDate ? ` to ${new Date(event.endDate).toLocaleDateString()}` : ''}
                         </span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="px-4 py-2.5 bg-[#f8f7fa] border-t border-[#ebebed] flex items-center justify-between text-xs text-[#7367f0] group-hover:bg-[#7367f0]/5 transition-colors">
+                <div className="px-4 py-2.5 bg-[#f8f7fa] border-t border-[#ebebed] flex items-center justify-between  group-hover:bg-[#7367f0]/5 transition-colors">
                   <span>Manage Event</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -200,14 +200,14 @@ export default function OrganizerEventsPage() {
                 <label className="form-label">Event Logo</label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
+                    {/* <input
                       className="form-input text-xs flex-1"
                       value={formLogo}
                       onChange={(e) => setFormLogo(e.target.value)}
                       placeholder="Paste image URL (e.g. https://.../logo.png)"
-                    />
+                    /> */}
                     <label className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                      <span>Upload</span>
+                      <span className='text-indigo-700'>Upload</span>
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/svg+xml,image/webp"

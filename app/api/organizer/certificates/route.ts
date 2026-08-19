@@ -16,6 +16,7 @@ export async function GET() {
     const certificates = await prisma.certificate.findMany({
       where: orgId ? { event: { organizationId: orgId } } : {},
       include: {
+        template: true,
         event: {
           include: {
             organization: { select: { id: true, name: true } },

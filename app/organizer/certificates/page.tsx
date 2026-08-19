@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 import { Award, Plus, Calendar, Users, ArrowRight } from 'lucide-react';
 
 interface Certificate {
@@ -9,6 +10,7 @@ interface Certificate {
   name: string;
   status: string;
   publicSlug: string;
+  template?: { fileKey: string } | null;
   event: {
     name: string;
     organization: { id: string; name: string };
@@ -32,7 +34,7 @@ export default function OrganizerCertificatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl text-black">Organization Certificates</h1>
-          <p className="text-xs text-black mt-0.5">
+          <p className=" mt-0.5">
             Design templates, map datasets, and manage public certificate verification links
           </p>
         </div>
@@ -51,8 +53,8 @@ export default function OrganizerCertificatesPage() {
       ) : certs.length === 0 ? (
         <div className="materio-card p-12 text-center bg-white border border-[#dbdade] max-w-lg mx-auto mt-8">
           <Award className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" />
-          <h3 className="text-sm text-black mb-1">No certificates configured yet</h3>
-          <p className="text-xs text-black mb-5">
+          <h3 className=" text-black mb-1">No certificates configured yet</h3>
+          <p className="text-black mb-5">
             Create an event first, then add certificate templates to start generating credentials.
           </p>
           <Link href="/organizer/events" className="no-underline">
@@ -67,15 +69,21 @@ export default function OrganizerCertificatesPage() {
               href={`/organizer/certificates/${cert.id}`}
               className="no-underline text-inherit block group"
             >
-              <div className="materio-card p-4 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="materio-card p-3 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Award className="w-5 h-5 text-[#a5a2ad] flex-shrink-0" />
+                  <div className="w-16 h-11 bg-[#f8f7fa] border border-[#dbdade] overflow-hidden flex-shrink-0">
+                    <CertificateThumbnail
+                      url={cert.template?.fileKey}
+                      name={cert.name}
+                      className="w-full h-full"
+                    />
+                  </div>
                   <div className="min-w-0">
-                    <div className="text-sm text-black group-hover:text-[#7367f0] transition-colors truncate">
+                    <div className="text-black group-hover:text-[#7367f0] transition-colors truncate">
                       {cert.name}
                     </div>
-                    <div className="text-xs text-[#6f6b7d] mt-0.5 flex items-center gap-1.5 truncate">
-                      <Calendar className="w-3 h-3 text-[#a5a2ad]" />
+                    <div className=" text-[#6f6b7d] mt-0.5 flex items-center gap-1.5 truncate">
+                      {/* <Calendar className="w-3 h-3 text-[#a5a2ad]" /> */}
                       <span>{cert.event.name}</span>
                     </div>
                   </div>
@@ -83,13 +91,13 @@ export default function OrganizerCertificatesPage() {
 
                 <div className="flex items-center gap-6 self-end sm:self-auto">
                   <div className="text-right">
-                    <div className="text-sm text-black">{cert._count.recipients}</div>
-                    <div className="text-[10px] text-[#6f6b7d] uppercase tracking-wider">Recipients</div>
+                    <div className="text-black">{cert._count.recipients}</div>
+                    <div className="text-[10px] tracking-wider">Recipients</div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-sm text-black">{cert._count.fields}</div>
-                    <div className="text-[10px] text-[#6f6b7d] uppercase tracking-wider">Fields</div>
+                    <div className="text-black">{cert._count.fields}</div>
+                    <div className="text-[10px]  tracking-wider">Fields</div>
                   </div>
 
                   <span className="text-xs text-black">{cert.status}</span>

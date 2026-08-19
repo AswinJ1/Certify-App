@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 import {
   Calendar,
   Award,
@@ -21,6 +22,7 @@ interface Certificate {
   name: string;
   status: string;
   publicSlug: string;
+  template?: { fileKey: string; metadata?: Record<string, unknown> } | null;
   _count: { recipients: number };
 }
 
@@ -157,24 +159,24 @@ export default function OrganizerEventDetailPage() {
             )}
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-black">{event.status}</span>
-                <span className="text-xs text-[#6f6b7d]">·</span>
-                <span className="text-xs text-[#6f6b7d]">{event.organization.name}</span>
+                <span className=" text-black">{event.status}</span>
+                <span className=" text-[#6f6b7d]">·</span>
+                <span className=" text-[#6f6b7d]">{event.organization.name}</span>
               </div>
               <h1 className="text-xl text-black">{event.name}</h1>
               {event.description && (
-                <p className="text-xs text-black mt-1 max-w-2xl">{event.description}</p>
+                <p className=" text-black mt-1 max-w-2xl">{event.description}</p>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start md:self-auto">
             <button
-              className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5"
+              className="curs py-2 px-3 flex items-center gap-1.5"
               onClick={() => setShowEdit(true)}
             >
               <Edit2 className="w-3.5 h-3.5 text-[#7367f0]" />
-              <span>Edit Event / Logo</span>
+              <span>Edit Event</span>
             </button>
             <button
               className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm"
@@ -197,7 +199,7 @@ export default function OrganizerEventDetailPage() {
 
           <div className="p-3.5 bg-[#f8f7fa] border border-[#dbdade]">
             <div className="text-xl text-black">{totalRecipients}</div>
-            <div className="text-xs text-[#6f6b7d] mt-0.5">
+            <div className=" mt-0.5">
               Total Recipients
             </div>
           </div>
@@ -207,7 +209,7 @@ export default function OrganizerEventDetailPage() {
               <div className="text-sm text-black mt-1">
                 {new Date(event.startDate).toLocaleDateString()}
               </div>
-              <div className="text-xs text-[#6f6b7d] mt-0.5">
+              <div className=" mt-0.5">
                 Event Date
               </div>
             </div>
@@ -219,8 +221,8 @@ export default function OrganizerEventDetailPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-[#a5a2ad]" />
-            <h2 className="text-sm text-black">
+            {/* <Award className="w-4 h-4 text-[#a5a2ad]" /> */}
+            <h2 className="">
               Certificates ({event.certificates.length})
             </h2>
           </div>
@@ -229,8 +231,8 @@ export default function OrganizerEventDetailPage() {
         {event.certificates.length === 0 ? (
           <div className="materio-card p-10 text-center bg-white border border-[#dbdade]">
             <Award className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" />
-            <h3 className="text-sm text-black">No certificates configured yet</h3>
-            <p className="text-xs text-[#6f6b7d] mt-1 mb-4">
+            <h3 className="text-black">No certificates configured yet</h3>
+            <p className=" mt-1 mb-4">
               Add a certificate template to start issuing dynamic credentials for this event.
             </p>
             <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
@@ -244,28 +246,37 @@ export default function OrganizerEventDetailPage() {
               <Link
                 key={cert.id}
                 href={`/organizer/certificates/${cert.id}`}
-                className="no-underline text-inherit group"
+                className="no-underline text-inherit group block h-full"
               >
-                <div className="materio-card bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all p-5 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-black">{cert.status}</span>
-                      <Award className="w-4 h-4 text-[#a5a2ad]" />
+                <div className="materio-card bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col justify-between h-full overflow-hidden">
+                  <div className="h-36 bg-[#f8f7fa] border-b border-[#ebebed] overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                    <CertificateThumbnail
+                      url={cert.template?.fileKey}
+                      name={cert.name}
+                      className="w-full h-full"
+                    />
+                    <div className="absolute top-2.5 right-2.5 bg-white/95 px-2 py-0.5 text-[10px] text-black border border-[#dbdade] shadow-xs z-10">
+                      {cert.status}
                     </div>
-                    <h3 className="text-sm text-black">
-                      {cert.name}
-                    </h3>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#ebebed] flex items-center justify-between text-xs text-black">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-[#a5a2ad]" />
-                      <span>{cert._count.recipients} recipients</span>
-                    </span>
-                    <span className="text-[#7367f0] flex items-center gap-1">
-                      <span>Studio</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
+                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm text-black group-hover:text-[#7367f0] transition-colors line-clamp-1">
+                        {cert.name}
+                      </h3>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#ebebed] flex items-center justify-between text-xs text-black">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-[#a5a2ad]" />
+                        <span>{cert._count.recipients} recipients</span>
+                      </span>
+                      <span className="text-[#7367f0] flex items-center gap-1">
+                        <span>Studio</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -341,12 +352,12 @@ export default function OrganizerEventDetailPage() {
                 <label className="form-label">Event Logo</label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
+                    {/* <input
                       className="form-input text-xs flex-1"
                       value={editLogo}
                       onChange={(e) => setEditLogo(e.target.value)}
                       placeholder="Paste image URL (e.g. https://.../logo.png)"
-                    />
+                    /> */}
                     <label className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                       <span>Upload</span>
                       <input

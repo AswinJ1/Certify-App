@@ -92,8 +92,8 @@ export default function UploadWithRetry({
     <div className="w-full space-y-3">
       {title && (
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-bold text-[#2f2b3d]">
-            <UploadCloud className="w-4 h-4 text-[#7367f0]" />
+          <div className="flex items-center gap-2 ">
+            <UploadCloud className="w-4 h-4 " />
             <span>{title}</span>
           </div>
           {retryCount > 0 && (
@@ -153,16 +153,16 @@ export default function UploadWithRetry({
               className="hidden"
             />
 
-            <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] group-hover:bg-[#7367f0] group-hover:text-white transition-colors flex items-center justify-center mb-1">
+            {/* <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] group-hover:bg-[#7367f0] group-hover:text-white transition-colors flex items-center justify-center mb-1">
               <FileSpreadsheet className="w-6 h-6" />
-            </div>
+            </div> */}
 
-            <div className="text-sm font-bold text-[#2f2b3d]">
+            <div>
               Click to browse or drop spreadsheet file here
             </div>
 
-            <div className="text-xs text-[#6f6b7d]">
-              Supports Excel (<strong className="text-[#2f2b3d]">.XLSX, .XLS</strong>) & CSV (<strong className="text-[#2f2b3d]">.CSV</strong>) up to 32MB
+            <div className="">
+              Supports Excel (<strong >.XLSX, .XLS</strong>) & CSV (<strong >.CSV</strong>) up to 32MB
             </div>
 
             <button

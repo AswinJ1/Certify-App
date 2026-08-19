@@ -19,6 +19,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         },
         template: true,
         fields: { orderBy: { sortOrder: 'asc' } },
+        recipients: {
+          take: 20,
+          select: { id: true, data: true },
+        },
         datasets: {
           include: { columns: { orderBy: { columnIndex: 'asc' } } },
           orderBy: { uploadedAt: 'desc' },

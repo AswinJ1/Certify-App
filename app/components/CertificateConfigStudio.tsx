@@ -79,6 +79,7 @@ interface CertificateDetail {
   };
   template: { id: string; fileKey: string; metadata: Record<string, unknown> } | null;
   fields: CertField[];
+  recipients?: { id: string; data: Record<string, unknown> }[];
   datasets: Dataset[];
   mappings: FieldMapping[];
   formFields: FormFieldConfig[];
@@ -373,8 +374,8 @@ export default function CertificateConfigStudio({
     return (
       <div className="materio-card p-12 text-center bg-white border border-[#dbdade]">
         <AlertCircle className="w-10 h-10 text-[#ea5455] mx-auto mb-3" />
-        <h2 className="text-lg font-bold text-[#2f2b3d]">Certificate Not Found</h2>
-        <p className="text-xs text-[#6f6b7d] mt-1 mb-4">The requested certificate configuration does not exist.</p>
+        <h2 className="">Certificate Not Found</h2>
+        <p className=" mt-1 mb-4">The requested certificate configuration does not exist.</p>
         <button className="btn-secondary text-xs" onClick={() => router.push(`${basePath}/certificates`)}>
           Back to Certificates
         </button>
@@ -388,8 +389,8 @@ export default function CertificateConfigStudio({
   const steps = [
     { key: 'overview' as Step, label: 'Overview', icon: FileText, done: true },
     { key: 'template' as Step, label: 'Template', icon: ImageIcon, done: !!cert.template },
-    { key: 'fields' as Step, label: 'Fields & Layout', icon: Type, done: cert.fields.length > 0 },
     { key: 'dataset' as Step, label: 'Recipients Data', icon: Database, done: cert.datasets.length > 0 },
+    { key: 'fields' as Step, label: 'Fields & Layout', icon: Type, done: cert.fields.length > 0 },
     { key: 'mapping' as Step, label: 'Field Mapping', icon: Link2, done: cert.mappings.length > 0 },
     { key: 'form' as Step, label: 'Public Form', icon: Sliders, done: cert.formFields.length > 0 },
     { key: 'publish' as Step, label: 'Publish & Live', icon: Send, done: cert.status === 'PUBLISHED' },
@@ -420,23 +421,22 @@ export default function CertificateConfigStudio({
         <div>
           <button
             onClick={() => router.push(`${basePath}/certificates`)}
-            className="btn-secondary text-xs py-1.5 px-3 mb-2 flex items-center gap-1.5"
+            className="cursor-pointer py-1.5 px-3 mb-2 flex items-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Certificates</span>
           </button>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-[#2f2b3d] tracking-tight">{cert.name}</h1>
-            <span className={`badge badge-${cert.status.toLowerCase()}`}>{cert.status}</span>
+            <h1 className="text-2xl  tracking-tight">{cert.name}</h1>
           </div>
-          <div className="text-xs text-[#6f6b7d] flex items-center gap-2 mt-1">
-            <span className="flex items-center gap-1 font-medium text-[#2f2b3d]">
-              <Calendar className="w-3.5 h-3.5 text-[#00bad1]" />
+          <div className=" flex items-center gap-2 mt-1">
+            <span className="flex items-center gap-1 ">
+              {/* <Calendar className="w-3.5 h-3.5 " /> */}
               {cert.event.name}
             </span>
             <span>·</span>
             <span className="flex items-center gap-1">
-              <Building2 className="w-3.5 h-3.5 text-[#7367f0]" />
+              {/* <Building2 className="w-3.5 h-3.5 text-[#7367f0]" /> */}
               {cert.event.organization.name}
             </span>
           </div>
@@ -466,7 +466,7 @@ export default function CertificateConfigStudio({
             <button
               key={step.key}
               onClick={() => setActiveStep(step.key)}
-              className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-colors border ${
+              className={`flex items-center gap-2 px-3.5 py-2  whitespace-nowrap transition-colors border ${
                 isActive
                   ? 'bg-[#7367f0] text-white border-[#7367f0]'
                   : 'bg-white text-[#6f6b7d] hover:text-[#2f2b3d] hover:bg-[#f8f7fa] border-transparent'
@@ -489,8 +489,8 @@ export default function CertificateConfigStudio({
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
           <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
             <div>
-              <h2 className="text-base font-bold text-[#2f2b3d]">Certificate Snapshot</h2>
-              <p className="text-xs text-[#6f6b7d] mt-0.5">Summary of all configured certificate components</p>
+              <h2 className="">Certificate Snapshot</h2>
+              <p className="mt-0.5">Summary of all configured certificate components</p>
             </div>
             <button
               onClick={() => setActiveStep('template')}
@@ -502,21 +502,21 @@ export default function CertificateConfigStudio({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-4 bg-[#f8f7fa] border border-[#dbdade] text-center">
-              <div className="text-2xl font-extrabold text-[#7367f0]">{cert._count.recipients}</div>
-              <div className="text-xs font-semibold text-[#6f6b7d] uppercase tracking-wider mt-1">Recipients</div>
+            <div className="p-4 text-center">
+              <div className="text-2xl">{cert._count.recipients}</div>
+              <div className=" tracking-wider mt-1">Recipients</div>
             </div>
-            <div className="p-4 bg-[#f8f7fa] border border-[#dbdade] text-center">
-              <div className="text-2xl font-extrabold text-[#00bad1]">{cert.fields.length}</div>
-              <div className="text-xs font-semibold text-[#6f6b7d] uppercase tracking-wider mt-1">Dynamic Fields</div>
+            <div className="p-4  text-center">
+              <div className="text-2xl ">{cert.fields.length}</div>
+              <div className=" tracking-wider mt-1">Dynamic Fields</div>
             </div>
-            <div className="p-4 bg-[#f8f7fa] border border-[#dbdade] text-center">
-              <div className="text-2xl font-extrabold text-[#28c76f]">{cert.mappings.length}</div>
-              <div className="text-xs font-semibold text-[#6f6b7d] uppercase tracking-wider mt-1">Field Mappings</div>
+            <div className="p-4 text-center">
+              <div className="text-2xl ">{cert.mappings.length}</div>
+              <div className=" tracking-wider mt-1">Field Mappings</div>
             </div>
-            <div className="p-4 bg-[#f8f7fa] border border-[#dbdade] text-center">
-              <div className="text-2xl font-extrabold text-[#ff9f43]">{cert.formFields.length}</div>
-              <div className="text-xs font-semibold text-[#6f6b7d] uppercase tracking-wider mt-1">Form Lookups</div>
+            <div className="p-4  text-center">
+              <div className="text-2xl">{cert.formFields.length}</div>
+              <div className="tracking-wider mt-1">Form Lookups</div>
             </div>
           </div>
 
@@ -548,8 +548,8 @@ export default function CertificateConfigStudio({
                 )}
               </div>
               <div>
-                <div className="text-xs font-bold text-[#2f2b3d]">{cert.event.name}</div>
-                <div className="text-[10px] text-[#6f6b7d]">
+                <div className=" text-[#2f2b3d]">{cert.event.name}</div>
+                <div className="text-[10px]">
                   Both logos appear side-by-side on your public verification portal
                 </div>
               </div>
@@ -561,24 +561,24 @@ export default function CertificateConfigStudio({
                 setEventLogoInput(cert.event.logo || '');
                 setShowEventLogoModal(true);
               }}
-              className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 self-start md:self-auto"
+              className="cursor-pointer py-1.5 px-3 flex items-center gap-1.5 self-start md:self-auto"
             >
-              <ImageIcon className="w-3.5 h-3.5 text-[#7367f0]" />
+              <ImageIcon className="w-3.5 h-3.5 " />
               <span>{cert.event.logo ? 'Change Event Logo' : 'Upload Event Logo'}</span>
             </button>
           </div>
 
           {cert.status === 'PUBLISHED' && (
-            <div className="p-4 bg-[#28c76f]/5 border border-[#28c76f]/30 space-y-2">
+            <div className="p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#28c76f]">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="flex items-center gap-2 ">
+                  {/* <CheckCircle2 className="w-4 h-4" /> */}
                   <span>Public Lookup Page Live</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyPublicUrl(publicUrl)}
-                  className="btn-secondary text-xs py-1 px-2.5 flex items-center gap-1"
+                  className="cursor-pointer  py-1 px-2.5 flex items-center gap-1"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-[#28c76f]" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copied' : 'Copy URL'}</span>
@@ -595,24 +595,24 @@ export default function CertificateConfigStudio({
       {/* ── STEP 2: TEMPLATE UPLOAD ── */}
       {activeStep === 'template' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
-          <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-base font-bold text-[#2f2b3d]">Certificate Background Template</h2>
-            <p className="text-xs text-[#6f6b7d] mt-0.5">
+          <div className="border-none pb-4">
+            <h2 className="text-lg">Certificate Background Template</h2>
+            <p className="mt-0.5">
               Upload a single-page PDF or high-resolution image background for this certificate
             </p>
           </div>
 
           {cert.template && (
-            <div className="p-4 bg-[#28c76f]/5 border border-[#28c76f]/30 flex items-center justify-between">
+            <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white border border-[#28c76f]/40 text-[#28c76f]">
+                {/* <div className="p-2 bg-white border border-[#28c76f]/40 text-[#28c76f]">
                   <CheckCircle2 className="w-5 h-5" />
-                </div>
+                </div> */}
                 <div>
-                  <div className="text-xs font-bold text-[#2f2b3d]">Current Template Active</div>
-                  <div className="text-[11px] text-[#6f6b7d] mt-0.5 font-mono truncate max-w-md">
+                  {/* <div className="">Current Template Active</div> */}
+                  {/* <div className="text-[11px] text-[#6f6b7d] mt-0.5 font-mono truncate max-w-md">
                     {(cert.template.metadata as Record<string, string>)?.fileName || cert.template.fileKey}
-                  </div>
+                  </div> */}
                 </div>
               </div>
               <button
@@ -639,8 +639,8 @@ export default function CertificateConfigStudio({
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-5">
           <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
             <div>
-              <h2 className="text-base font-bold text-[#2f2b3d]">Visual Certificate Field Editor</h2>
-              <p className="text-xs text-[#6f6b7d] mt-0.5">
+              <h2 className="text-lg">Visual Certificate Field Editor</h2>
+              <p className=" mt-0.5">
                 Drag, resize, and position dynamic fields (Name, Event, Date, ID) directly on the template canvas
               </p>
             </div>
@@ -660,6 +660,7 @@ export default function CertificateConfigStudio({
             saving={saving}
             templateUrl={cert.template?.fileKey}
             datasetColumns={allColumns}
+            sampleRecipients={cert.recipients?.map((r) => r.data) || []}
           />
         </div>
       )}
@@ -668,26 +669,26 @@ export default function CertificateConfigStudio({
       {activeStep === 'dataset' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
           <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-base font-bold text-[#2f2b3d]">Recipient Dataset Import</h2>
-            <p className="text-xs text-[#6f6b7d] mt-0.5">
+            <h2 className="text-lg">Recipient Dataset Import</h2>
+            <p className=" mt-0.5">
               Upload recipient data spreadsheet (CSV or XLSX). Each row represents a certificate recipient.
             </p>
           </div>
 
           {cert.datasets.length > 0 && (
             <div className="space-y-3">
-              <div className="text-xs font-bold uppercase text-[#2f2b3d] tracking-wider">Uploaded Datasets</div>
+              <div className=" tracking-wider">Uploaded Datasets</div>
               {cert.datasets.map((ds) => (
                 <div key={ds.id} className="p-4 bg-[#f8f7fa] border border-[#dbdade]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <Database className="w-4 h-4 text-[#7367f0]" />
-                      <span className="font-bold text-sm text-[#2f2b3d]">{ds.fileName}</span>
+                      <span className="">{ds.fileName}</span>
                     </div>
-                    <span className="badge badge-active">{ds.rowCount} Rows Detected</span>
+                    <span className="">{ds.rowCount} Rows Present</span>
                   </div>
-                  <div className="mt-2 text-xs text-[#6f6b7d]">
-                    <strong>Detected Columns ({ds.columns.length}):</strong>{' '}
+                  <div className="mt-2">
+                    Detected Columns ({ds.columns.length}):{' '}
                     {ds.columns.map((c) => c.columnName).join(', ')}
                   </div>
                 </div>
@@ -710,8 +711,8 @@ export default function CertificateConfigStudio({
       {activeStep === 'mapping' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
           <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-base font-bold text-[#2f2b3d]">Field Column Mapping</h2>
-            <p className="text-xs text-[#6f6b7d] mt-0.5">
+            <h2 className="text-lg">Field Column Mapping</h2>
+            <p className="mt-0.5">
               Connect spreadsheet columns to the dynamic text fields configured on the certificate
             </p>
           </div>
@@ -731,8 +732,8 @@ export default function CertificateConfigStudio({
                       className="p-3.5 bg-white border border-[#dbdade] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="min-w-0 sm:w-1/2">
-                        <div className="text-sm font-bold text-[#2f2b3d]">{field.label || field.name}</div>
-                        <div className="text-xs text-[#6f6b7d]">Field Key: <code>{field.name}</code></div>
+                        <div className="">{field.label || field.name}</div>
+                        <div className="">Field Key: <code>{field.name}</code></div>
                       </div>
 
                       <div className="sm:w-1/2 flex items-center gap-2">
@@ -781,8 +782,8 @@ export default function CertificateConfigStudio({
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
           <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
             <div>
-              <h2 className="text-base font-bold text-[#2f2b3d]">Public Recipient Lookup Form</h2>
-              <p className="text-xs text-[#6f6b7d] mt-0.5">
+              <h2 className="text-lg">Public Recipient Lookup Form</h2>
+              <p className="mt-0.5">
                 Specify which dataset fields students/participants must provide to verify and download their certificate
               </p>
             </div>
@@ -794,7 +795,7 @@ export default function CertificateConfigStudio({
                   { columnId: '', label: '', required: true },
                 ])
               }
-              className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1"
+              className="cursor-pointer py-1.5 px-3 flex items-center gap-1"
             >
               <span>+ Add Lookup Field</span>
             </button>
@@ -894,15 +895,15 @@ export default function CertificateConfigStudio({
       {activeStep === 'publish' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
           <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-base font-bold text-[#2f2b3d]">Publishing & Lifecycle Control</h2>
-            <p className="text-xs text-[#6f6b7d] mt-0.5">
+            <h2 className="text-lg">Publishing & Lifecycle Control</h2>
+            <p className="mt-0.5">
               Review configuration readiness and manage the live status of the certificate download portal
             </p>
           </div>
 
           {/* Checklist */}
           <div className="space-y-2">
-            <div className="text-xs font-bold uppercase text-[#2f2b3d] tracking-wider mb-2">
+            <div className="tracking-wider mb-2">
               Pre-flight Checklist
             </div>
             {steps.slice(1, -1).map((s) => (
@@ -929,8 +930,8 @@ export default function CertificateConfigStudio({
           <div className="pt-4 border-t border-[#ebebed]">
             {cert.status === 'PUBLISHED' ? (
               <div className="space-y-4">
-                <div className="p-4 bg-[#28c76f]/10 border border-[#28c76f]/30">
-                  <div className="font-bold text-sm text-[#28c76f] flex items-center gap-2">
+                <div className="p-4  border">
+                  <div className=" flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Certificate is Live & Searchable!</span>
                   </div>
@@ -1043,12 +1044,12 @@ export default function CertificateConfigStudio({
                 <label className="form-label">Event Logo</label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
+                    {/* <input
                       className="form-input text-xs flex-1"
                       value={eventLogoInput}
                       onChange={(e) => setEventLogoInput(e.target.value)}
                       placeholder="Paste image URL (e.g. https://.../logo.png)"
-                    />
+                    /> */}
                     <label className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                       <span>Upload</span>
                       <input

@@ -16,7 +16,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       include: {
         organization: { select: { id: true, name: true } },
         certificates: {
-          include: { _count: { select: { recipients: true } } },
+          include: {
+            template: true,
+            _count: { select: { recipients: true } },
+          },
           orderBy: { createdAt: 'desc' },
         },
         _count: { select: { certificates: true } },

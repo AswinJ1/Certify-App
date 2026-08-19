@@ -104,13 +104,13 @@ export default function OrganizerRecipientsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl text-black">Recipients Directory</h1>
-          <p className="text-xs text-black mt-0.5">
+          <p className="text-black mt-0.5">
             Browse and inspect all participant records imported from your Excel and CSV datasets
           </p>
         </div>
         <Link href="/organizer/certificates" className="no-underline">
-          <button className="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
-            <Award className="w-3.5 h-3.5" />
+          <button className="btn-primary py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
+            {/* <Award className="w-3.5 h-3.5" /> */}
             <span>Configure Certificates</span>
           </button>
         </Link>
@@ -119,31 +119,31 @@ export default function OrganizerRecipientsPage() {
       {/* ── KPI Stat Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="materio-card p-4 bg-white border border-[#dbdade] flex items-center gap-3">
-          <div className="p-2.5 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center">
+          <div className="p-2.5  flex items-center justify-center">
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-black">Total Recipients</div>
+            <div className="text-black">Total Recipients</div>
             <div className="text-xl text-black mt-0.5">{pagination.total}</div>
           </div>
         </div>
 
         <div className="materio-card p-4 bg-white border border-[#dbdade] flex items-center gap-3">
-          <div className="p-2.5 bg-[#28c76f]/10 text-[#28c76f] flex items-center justify-center">
+          <div className="p-2.5  flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-black">Certificates Claimed</div>
+            <div className="text-black">Certificates Claimed</div>
             <div className="text-xl text-black mt-0.5">{claimedCount}</div>
           </div>
         </div>
 
         <div className="materio-card p-4 bg-white border border-[#dbdade] flex items-center gap-3">
-          <div className="p-2.5 bg-[#00bad1]/10 text-[#00bad1] flex items-center justify-center">
+          <div className="p-2.5  flex items-center justify-center">
             <Download className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs text-black">Total PDF Downloads</div>
+            <div className="text-black">Total PDF Downloads</div>
             <div className="text-xl text-black mt-0.5">{totalDownloads}</div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function OrganizerRecipientsPage() {
       <div className="materio-card p-4 bg-white border border-[#dbdade] flex flex-col sm:flex-row items-center gap-3">
         {/* Certificate Dropdown Filter */}
         <div className="relative w-full sm:w-64">
-          <Filter className="w-3.5 h-3.5 text-[#a5a2ad] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* <Filter className="w-3.5 h-3.5 text-[#a5a2ad] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" /> */}
           <select
             className="form-input text-xs pl-8 pr-3 py-2 w-full text-black bg-white border border-[#dbdade]"
             value={selectedCert}
@@ -248,7 +248,7 @@ export default function OrganizerRecipientsPage() {
                               <div className="text-xs text-black">{r.displayName}</div>
                               {r.email ? (
                                 <div className="text-[11px] text-black flex items-center gap-1">
-                                  <Mail className="w-3 h-3 text-[#a5a2ad]" />
+                                  {/* <Mail className="w-3 h-3 text-[#a5a2ad]" /> */}
                                   <span>{r.email}</span>
                                 </div>
                               ) : (
@@ -262,11 +262,11 @@ export default function OrganizerRecipientsPage() {
                         <td className="py-3 px-4">
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5 text-xs text-black">
-                              <Award className="w-3.5 h-3.5 text-[#7367f0]" />
+                              {/* <Award className="w-3.5 h-3.5 text-[#7367f0]" /> */}
                               <span>{r.certificateName}</span>
                             </div>
                             <div className="text-[11px] text-[#6f6b7d] flex items-center gap-1">
-                              <Building2 className="w-3 h-3 text-[#a5a2ad]" />
+                              {/* <Building2 className="w-3 h-3 text-[#a5a2ad]" /> */}
                               <span>{r.eventName}</span>
                             </div>
                           </div>
@@ -283,9 +283,9 @@ export default function OrganizerRecipientsPage() {
                         {/* Status */}
                         <td className="py-3 px-4">
                           {r.hasGenerated ? (
-                            <span className="badge badge-published">CLAIMED</span>
+                            <span className="">CLAIMED</span>
                           ) : (
-                            <span className="badge badge-ready">AVAILABLE</span>
+                            <span className="">AVAILABLE</span>
                           )}
                         </td>
 

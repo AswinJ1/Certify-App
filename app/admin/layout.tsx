@@ -1,8 +1,47 @@
 'use client';
 
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { Separator } from '@/components/ui/separator';
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 import {
   LayoutDashboard,
   Building2,
@@ -11,13 +50,9 @@ import {
   BarChart3,
   Users,
   ScrollText,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  User as UserIcon,
   ShieldCheck,
-  Search,
-  Command,
+  ChevronsUpDown,
+  LogOut,
 } from 'lucide-react';
 
 interface User {
@@ -32,7 +67,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -66,7 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!user) return null;
 
   const navItems = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, badge: '5' },
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/organizations', label: 'Organizations', icon: Building2 },
     { href: '/admin/events', label: 'All Events', icon: Calendar },
     { href: '/admin/certificates', label: 'All Certificates', icon: Award },
@@ -75,158 +109,181 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/audit', label: 'Audit Logs', icon: ScrollText },
   ];
 
+  // Current page title for breadcrumb
+  const currentNav = navItems.find(
+    (item) => item.href === pathname || (item.href !== '/admin' && pathname.startsWith(item.href))
+  );
+  const pageTitle = currentNav ? currentNav.label : 'Super Administrator';
+
   return (
-    <div className="flex min-h-screen bg-[#f8f7fa] text-[#2f2b3d]">
-      {/* ── Materio Sidebar ── */}
-      <aside
-        style={{
-          width: sidebarOpen ? '260px' : '78px',
-          background: '#ffffff',
-          borderRight: '1px solid #dbdade',
-          transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-        className="flex flex-col flex-shrink-0 z-30 shadow-sm"
-      >
-        {/* Brand Header */}
-        <div className="h-16 px-4 border-b border-[#ebebed] flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-3 no-underline text-inherit overflow-hidden">
-            <div className="w-10 h-10 bg-gradient-to-tr from-[#7367f0] to-[#9e95f5] flex items-center justify-center text-white shadow-md shadow-indigo-500/30 flex-shrink-0">
-              <Award className="w-5 h-5" />
-            </div>
-            {sidebarOpen && (
-              <div className="truncate">
-                <div className="font-extrabold text-base tracking-tight text-[#2f2b3d]">Certify Admin</div>
-                <div className="text-[10px] font-bold text-[#7367f0] uppercase tracking-wider flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-[#7367f0]" />
-                  <span>Platform Super Admin</span>
+    <SidebarProvider>
+      <Sidebar collapsible="icon" className="border-r border-[#ebebed] bg-white">
+        {/* ── Sidebar Header: Super Admin Brand ── */}
+        <SidebarHeader className="border-b border-[#ebebed] p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" className="hover:bg-[#f8f7fa] transition-colors">
+                <div className="flex aspect-square size-8 items-center justify-center bg-[#7367f0] text-white flex-shrink-0">
+                  <ShieldCheck className="size-4" />
                 </div>
-              </div>
-            )}
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 text-[#a5a2ad] hover:text-[#2f2b3d] hover:bg-[#f8f7fa] transition-colors border-0 bg-transparent cursor-pointer"
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Section Header */}
-        {sidebarOpen && (
-          <div className="px-5 pt-5 pb-2 text-[10px] font-extrabold text-[#a5a2ad] uppercase tracking-wider">
-            Super Administrator
-          </div>
-        )}
-
-        {/* Navigation Items */}
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all no-underline ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#7367f0] to-[#8a81f3] text-white shadow-md shadow-indigo-500/25 font-bold'
-                    : 'text-[#5d596c] hover:text-[#2f2b3d] hover:bg-[#f4f5fa]'
-                }`}
-                title={!sidebarOpen ? item.label : undefined}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#7367f0]'}`} />
-                  {sidebarOpen && <span className="truncate">{item.label}</span>}
+                <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+                  <span className="truncate font-semibold text-black">
+                    Certify Admin
+                  </span>
+                  <span className="truncate text-[10px] text-[#7367f0]">
+                    Super Admin Console
+                  </span>
                 </div>
-              </Link>
-            );
-          })}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
 
-          {sidebarOpen && (
-            <div className="pt-4 mt-4 border-t border-[#ebebed]">
-              <Link
-                href="/organizer"
-                className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-[#00bad1] hover:bg-[#00bad1]/10 transition-colors"
-              >
-                <Building2 className="w-4 h-4" />
-                <span>Switch to Organizer View</span>
-              </Link>
-            </div>
-          )}
-        </nav>
+        {/* ── Sidebar Content: Navigation Links ── */}
+        <SidebarContent className="p-2 space-y-4">
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[10px] text-[#a5a2ad] uppercase tracking-wider px-2">
+              System Administration
+            </SidebarGroupLabel>
+            <SidebarMenu className="space-y-0.5 mt-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      render={
+                        <Link href={item.href} className="flex items-center gap-2.5">
+                          <Icon className={`size-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#7367f0]'}`} />
+                          <span>{item.label}</span>
+                        </Link>
+                      }
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className={`text-xs py-2 px-2.5 transition-all ${
+                        isActive
+                          ? 'bg-[#7367f0] text-white hover:bg-[#685dd8] hover:text-white font-medium shadow-xs'
+                          : 'text-[#5d596c] hover:bg-[#f4f5fa] hover:text-black'
+                      }`}
+                    />
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
 
-        {/* User Card & Logout */}
-        <div className="p-3 border-t border-[#ebebed] bg-[#fafafc]">
-          {sidebarOpen ? (
-            <div className="flex items-center justify-between gap-2 p-2 bg-white border border-[#dbdade]">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 bg-[#7367f0]/10 border border-[#7367f0]/20 flex items-center justify-center text-[#7367f0] font-bold text-xs flex-shrink-0">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-[#2f2b3d] truncate">{user.name}</div>
-                  <div className="text-[10px] text-[#6f6b7d] truncate">{user.email}</div>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 text-[#6f6b7d] hover:text-[#ea5455] hover:bg-[#ea5455]/10 transition-colors border-0 bg-transparent cursor-pointer"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center p-2 text-[#6f6b7d] hover:text-[#ea5455] hover:bg-[#ea5455]/10 transition-colors border-0 bg-transparent cursor-pointer"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </aside>
+          {/* Switch to Organizer View */}
+          <SidebarGroup className="pt-2 border-t border-[#ebebed]">
+            <SidebarGroupLabel className="text-[10px] text-[#a5a2ad] uppercase tracking-wider px-2">
+              Workspace Switch
+            </SidebarGroupLabel>
+            <SidebarMenu className="mt-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={
+                    <Link href="/organizer" className="flex items-center gap-2.5">
+                      <Building2 className="size-4 flex-shrink-0 text-[#00bad1]" />
+                      <span>Switch to Organizer View</span>
+                    </Link>
+                  }
+                  tooltip="Organizer Workspace"
+                  className="text-xs text-[#00bad1] hover:bg-[#00bad1]/10 hover:text-[#00bad1] py-2 px-2.5"
+                />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
 
-      {/* ── Main Content Area with Materio Top Header ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Materio Top Header Bar */}
-        <header className="h-16 bg-white border-b border-[#dbdade] px-6 md:px-8 flex items-center justify-between flex-shrink-0 sticky top-0 z-20 shadow-xs">
-          <div className="flex items-center gap-3 flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#a5a2ad]" />
-            <input
-              type="text"
-              placeholder="Search platform resources... (Ctrl+/)"
-              className="w-full text-xs text-[#2f2b3d] bg-transparent border-none outline-none placeholder-[#a5a2ad]"
-            />
-            <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#f8f7fa] border border-[#dbdade] text-[10px] font-mono text-[#a5a2ad]">
-              <Command className="w-2.5 h-2.5" /> K
-            </span>
-          </div>
+        {/* ── Sidebar Footer: Admin Profile ── */}
+        <SidebarFooter className="border-t border-[#ebebed] p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-[#f8f7fa] hover:bg-[#f8f7fa] transition-colors"
+                    >
+                      <div className="size-8 rounded-full bg-[#7367f0] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+                        <span className="truncate font-semibold text-black">
+                          {user.name}
+                        </span>
+                        <span className="truncate text-[10px] text-[#6f6b7d]">
+                          {user.email}
+                        </span>
+                      </div>
+                      <ChevronsUpDown className="ml-auto size-3.5 text-[#a5a2ad]" />
+                    </SidebarMenuButton>
+                  }
+                />
+                <DropdownMenuContent
+                  className="w-56 bg-white border border-[#dbdade] p-1.5 shadow-lg"
+                  side="right"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <DropdownMenuLabel className="p-2 text-xs font-normal">
+                    <div className="flex items-center gap-2">
+                      <div className="size-7 rounded-full bg-[#7367f0] text-white flex items-center justify-center font-bold text-[11px] flex-shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+                        <span className="truncate font-semibold text-black">{user.name}</span>
+                        <span className="truncate text-[10px] text-[#6f6b7d]">Platform Super Admin</span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-[#ebebed]" />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="gap-2 p-2 text-xs text-[#ea5455] cursor-pointer hover:bg-[#ea5455]/10"
+                    >
+                      <LogOut className="size-3.5" />
+                      <span>Log Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#f8f7fa] border border-[#dbdade] text-xs font-semibold text-[#2f2b3d]">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#7367f0]" />
-              <span>Super Administrator</span>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="btn-secondary text-xs py-1 px-2.5 flex items-center gap-1.5"
-              title="Sign Out"
-            >
-              <LogOut className="w-3.5 h-3.5 text-[#6f6b7d]" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
+      {/* ── Main Inset Container ── */}
+      <SidebarInset className="bg-[#f8f7fa] min-h-screen flex flex-col">
+        {/* Modern Minimal Breadcrumb Bar */}
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[#ebebed] bg-white px-4">
+          <SidebarTrigger className="-ml-1 text-[#6f6b7d] hover:text-black cursor-pointer" />
+          <Separator orientation="vertical" className="mr-2 h-4 bg-[#ebebed]" />
+          <Breadcrumb>
+            <BreadcrumbList className="text-xs">
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/admin" className="text-[#6f6b7d] hover:text-black no-underline">
+                  Super Admin
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="text-[#a5a2ad]" />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-semibold text-black">
+                  {pageTitle}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        {/* Content View Area */}
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

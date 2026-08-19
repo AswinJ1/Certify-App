@@ -21,6 +21,11 @@ import {
   Table,
   FileSpreadsheet,
   PlusCircle,
+  Eye,
+  EyeOff,
+  Shuffle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export interface CertField {
@@ -47,6 +52,7 @@ interface FieldEditorProps {
   saving?: boolean;
   templateUrl?: string | null;
   datasetColumns?: { id: string; columnName: string }[];
+  sampleRecipients?: Record<string, unknown>[];
 }
 
 // Standard A4 Landscape Dimensions in Points (842 x 595 pt)
@@ -226,6 +232,67 @@ function UniversalTemplateCanvas({ url, width, height }: { url: string; width: n
   );
 }
 
+/**
+ * Resolves live recipient data from the uploaded dataset or realistic fallback data
+ * so organizers can immediately preview the certificate output before publishing.
+ */
+function getSampleValue(
+  field: Partial<CertField>,
+  sampleData: Record<string, unknown> | null,
+  sampleIdx: number
+): string {
+  if (sampleData) {
+    // 1. Direct match by field.name
+    if (field.name && sampleData[field.name] !== undefined && sampleData[field.name] !== null) {
+      return String(sampleData[field.name]);
+    }
+    // 2. Direct match by field.label
+    if (field.label && sampleData[field.label] !== undefined && sampleData[field.label] !== null) {
+      return String(sampleData[field.label]);
+    }
+    // 3. Case-insensitive / normalized match
+    const cleanFieldName = (field.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanFieldLabel = (field.label || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const [k, v] of Object.entries(sampleData)) {
+      const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanK === cleanFieldName || cleanK === cleanFieldLabel) {
+        if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
+      }
+    }
+  }
+
+  // 4. Fallback realistic mock values if no dataset uploaded yet
+  const nameLower = (field.name || field.label || '').toLowerCase();
+  if (nameLower.includes('name') || nameLower.includes('student') || nameLower.includes('recipient')) {
+    const mockNames = ['Aswin J', 'Aravind BL', 'Dr. Radhika Menon', 'Siddharth V', 'Pooja Nair'];
+    return mockNames[sampleIdx % mockNames.length];
+  }
+  if (nameLower.includes('rank') || nameLower.includes('position')) {
+    const mockRanks = ['1st Place', '2nd Place', '3rd Place', 'Finalist', 'Rank 12'];
+    return mockRanks[sampleIdx % mockRanks.length];
+  }
+  if (nameLower.includes('score') || nameLower.includes('points') || nameLower.includes('count')) {
+    return String(98 + (sampleIdx % 5));
+  }
+  if (nameLower.includes('inst') || nameLower.includes('college') || nameLower.includes('org') || nameLower.includes('univ')) {
+    return 'Amrita Vishwa Vidyapeetham';
+  }
+  if (nameLower.includes('date')) {
+    return 'August 19, 2026';
+  }
+  if (nameLower.includes('time')) {
+    return '01:45:20';
+  }
+  if (nameLower.includes('event')) {
+    return 'ICPC Asia West Regionals';
+  }
+  if (nameLower.includes('id') || nameLower.includes('roll') || nameLower.includes('reg')) {
+    return `AM.EN.U4CSE${20000 + sampleIdx}`;
+  }
+
+  return field.label || field.name || 'Sample Data';
+}
+
 export default function FieldEditor({
   fields,
   onChange,
@@ -233,12 +300,15 @@ export default function FieldEditor({
   saving = false,
   templateUrl,
   datasetColumns = [],
+  sampleRecipients = [],
 }: FieldEditorProps) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(fields.length > 0 ? 0 : null);
   const [zoom, setZoom] = useState<number>(1);
   const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
   const [gridSize, setGridSize] = useState<number>(10);
   const [activeTab, setActiveTab] = useState<'properties' | 'list' | 'columns'>('properties');
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [sampleIndex, setSampleIndex] = useState<number>(0);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -372,6 +442,7 @@ export default function FieldEditor({
 
   // Mouse event handlers for Drag & Resize
   const handleMouseDown = (e: React.MouseEvent, idx: number, resizeHandle: string | null = null) => {
+    e.preventDefault();
     e.stopPropagation();
     setSelectedIdx(idx);
 
@@ -380,8 +451,10 @@ export default function FieldEditor({
 
     if (resizeHandle) {
       isResizingRef.current = resizeHandle;
+      isDraggingRef.current = false;
     } else {
       isDraggingRef.current = true;
+      isResizingRef.current = null;
     }
 
     dragStartRef.current = {
@@ -405,10 +478,8 @@ export default function FieldEditor({
         let newX = snap(dragStartRef.current.fieldX + deltaX);
         let newY = snap(dragStartRef.current.fieldY + deltaY);
 
-        const currentW = fields[selectedIdx]?.width || 200;
-        const currentH = fields[selectedIdx]?.height || 36;
-        newX = Math.max(0, Math.min(CANVAS_WIDTH - currentW, newX));
-        newY = Math.max(0, Math.min(CANVAS_HEIGHT - currentH, newY));
+        newX = Math.max(0, Math.min(CANVAS_WIDTH - 20, newX));
+        newY = Math.max(0, Math.min(CANVAS_HEIGHT - 20, newY));
 
         updateField(selectedIdx, { positionX: newX, positionY: newY });
       } else if (isResizingRef.current) {
@@ -419,19 +490,19 @@ export default function FieldEditor({
         let newY = dragStartRef.current.fieldY;
 
         if (handle.includes('right')) {
-          newW = snap(Math.max(50, dragStartRef.current.fieldW + deltaX));
+          newW = snap(Math.max(40, dragStartRef.current.fieldW + deltaX));
         }
         if (handle.includes('left')) {
-          const maxDelta = dragStartRef.current.fieldW - 50;
+          const maxDelta = dragStartRef.current.fieldW - 40;
           const clampedDelta = Math.min(maxDelta, deltaX);
           newW = snap(dragStartRef.current.fieldW - clampedDelta);
           newX = snap(dragStartRef.current.fieldX + clampedDelta);
         }
         if (handle.includes('bottom')) {
-          newH = snap(Math.max(20, dragStartRef.current.fieldH + deltaY));
+          newH = snap(Math.max(16, dragStartRef.current.fieldH + deltaY));
         }
         if (handle.includes('top')) {
-          const maxDelta = dragStartRef.current.fieldH - 20;
+          const maxDelta = dragStartRef.current.fieldH - 16;
           const clampedDelta = Math.min(maxDelta, deltaY);
           newH = snap(dragStartRef.current.fieldH - clampedDelta);
           newY = snap(dragStartRef.current.fieldY + clampedDelta);
@@ -458,6 +529,44 @@ export default function FieldEditor({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [selectedIdx, zoom, fields, snap]);
+
+  // Keyboard navigation & precision arrow key nudging
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedIdx === null || !fields[selectedIdx]) return;
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      const step = e.shiftKey ? 10 : 1;
+      const field = fields[selectedIdx];
+      let newX = field.positionX || 0;
+      let newY = field.positionY || 0;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        newX = Math.max(0, newX - step);
+        updateField(selectedIdx, { positionX: newX });
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        newX = Math.min(CANVAS_WIDTH - 20, newX + step);
+        updateField(selectedIdx, { positionX: newX });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        newY = Math.max(0, newY - step);
+        updateField(selectedIdx, { positionY: newY });
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        newY = Math.min(CANVAS_HEIGHT - 20, newY + step);
+        updateField(selectedIdx, { positionY: newY });
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        handleDeleteField(selectedIdx);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIdx, fields]);
 
   const selectedField = selectedIdx !== null ? fields[selectedIdx] : null;
 
@@ -489,6 +598,55 @@ export default function FieldEditor({
 
           <div className="h-5 w-[1px] bg-[#dbdade] mx-1" />
 
+          {/* Live Data Sample Preview Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className={`btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 transition-all ${
+              isPreviewMode
+                ? 'bg-[#7367f0] text-white border-[#7367f0] shadow-sm font-semibold'
+                : 'hover:bg-[#7367f0]/10 text-[#7367f0] border-[#7367f0]/40'
+            }`}
+            title="Preview real Excel/CSV recipient data directly on canvas"
+          >
+            {isPreviewMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{isPreviewMode ? 'Exit Sample Preview' : 'Live Data Preview'}</span>
+          </button>
+
+          {/* Sample Recipient Stepper (when in Preview Mode) */}
+          {isPreviewMode && (
+            <div className="flex items-center gap-1 bg-[#f8f7fa] border border-[#dbdade] px-2 py-0.5 text-xs rounded-none animate-in">
+              <span className="text-[#6f6b7d] text-[11px] mr-1 select-none">
+                Sample {sampleIndex + 1} of {Math.max(1, sampleRecipients.length || 5)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSampleIndex((i) => Math.max(0, i - 1))}
+                disabled={sampleIndex === 0}
+                className="p-1 hover:bg-white text-[#2f2b3d] disabled:opacity-30 cursor-pointer"
+                title="Previous Sample Recipient"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSampleIndex((i) => (i + 1) % Math.max(1, sampleRecipients.length || 5))}
+                className="p-1 hover:bg-white text-[#2f2b3d] cursor-pointer"
+                title="Next Sample Recipient"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSampleIndex(Math.floor(Math.random() * Math.max(1, sampleRecipients.length || 5)))}
+                className="p-1 hover:bg-white text-[#7367f0] cursor-pointer ml-0.5"
+                title="Random Sample Row"
+              >
+                <Shuffle className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
           {/* Grid Snap Toggle */}
           <button
             type="button"
@@ -512,7 +670,7 @@ export default function FieldEditor({
               title="Open Template File in New Tab"
             >
               <ExternalLink className="w-3.5 h-3.5 text-[#7367f0]" />
-              <span>Preview File</span>
+              <span>Template File</span>
             </a>
           )}
         </div>
@@ -593,6 +751,10 @@ export default function FieldEditor({
               const posY = field.positionY || 0;
               const width = field.width || 200;
               const height = field.height || 36;
+              const currentSample = sampleRecipients.length > 0 ? sampleRecipients[sampleIndex % sampleRecipients.length] : null;
+              const displayValue = isPreviewMode
+                ? getSampleValue(field, currentSample, sampleIndex)
+                : `{{ ${field.name || field.label || `Field ${idx + 1}`} }}`;
 
               return (
                 <div
@@ -612,20 +774,22 @@ export default function FieldEditor({
                     textAlign: (field.alignment?.toLowerCase() as 'left' | 'center' | 'right') || 'center',
                     lineHeight: `${height}px`,
                   }}
-                  className={`border transition-shadow flex items-center justify-center px-2 group ${
+                  className={`transition-shadow flex items-center justify-center px-2 group ${
                     isSelected
                       ? 'border-2 border-[#7367f0] bg-[#7367f0]/15 shadow-lg ring-2 ring-[#7367f0]/30 z-30'
+                      : isPreviewMode
+                      ? 'border border-transparent hover:border-[#7367f0]/50 hover:bg-[#7367f0]/5 z-20'
                       : 'border border-dashed border-[#7367f0]/80 bg-[#7367f0]/10 hover:border-[#7367f0] hover:bg-[#7367f0]/15 z-20'
                   }`}
                 >
-                  {/* Text Label */}
+                  {/* Dynamic Value Label (Live Sample vs Placeholders) */}
                   <span className="truncate w-full block pointer-events-none select-none font-semibold">
-                    {`{{ ${field.name || field.label || `Field ${idx + 1}`} }}`}
+                    {displayValue}
                   </span>
 
-                  {/* Coordinate Tag Badge on Select / Hover */}
+                  {/* Coordinate Tag Badge on Select / Hover (pointer-events-none so it never blocks dragging/clicks) */}
                   <div
-                    className={`absolute -top-5 left-0 bg-[#2f2b3d] text-white text-[10px] px-1.5 py-0.5 whitespace-nowrap font-sans font-medium flex items-center gap-1 shadow-xs ${
+                    className={`absolute -top-6 left-0 bg-[#2f2b3d] text-white text-[10px] px-1.5 py-0.5 whitespace-nowrap font-sans font-medium flex items-center gap-1 shadow-xs pointer-events-none select-none z-30 ${
                       isSelected ? 'block' : 'hidden group-hover:block'
                     }`}
                   >
@@ -635,43 +799,83 @@ export default function FieldEditor({
                     </span>
                   </div>
 
-                  {/* 8 Resize Handles */}
+                  {/* 8 Resize Handles with generous clickable areas */}
                   {isSelected && (
                     <>
                       {/* Corners */}
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'top-left')}
-                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-[#7367f0] border border-white cursor-nwse-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'top-left');
+                        }}
+                        className="absolute -top-2 -left-2 w-4 h-4 bg-[#7367f0] border-2 border-white cursor-nwse-resize z-40 shadow-sm"
+                        title="Resize Top-Left"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'top-right')}
-                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-[#7367f0] border border-white cursor-nesw-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'top-right');
+                        }}
+                        className="absolute -top-2 -right-2 w-4 h-4 bg-[#7367f0] border-2 border-white cursor-nesw-resize z-40 shadow-sm"
+                        title="Resize Top-Right"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'bottom-left')}
-                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-[#7367f0] border border-white cursor-nesw-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'bottom-left');
+                        }}
+                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#7367f0] border-2 border-white cursor-nesw-resize z-40 shadow-sm"
+                        title="Resize Bottom-Left"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'bottom-right')}
-                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-[#7367f0] border border-white cursor-nwse-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'bottom-right');
+                        }}
+                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-[#7367f0] border-2 border-white cursor-nwse-resize z-40 shadow-sm"
+                        title="Resize Bottom-Right"
                       />
 
                       {/* Edges */}
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'top')}
-                        className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-2 bg-[#7367f0] border border-white cursor-ns-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'top');
+                        }}
+                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-3 bg-[#7367f0] border-2 border-white cursor-ns-resize z-40 shadow-sm"
+                        title="Resize Height (Top)"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'bottom')}
-                        className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-2 bg-[#7367f0] border border-white cursor-ns-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'bottom');
+                        }}
+                        className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-3 bg-[#7367f0] border-2 border-white cursor-ns-resize z-40 shadow-sm"
+                        title="Resize Height (Bottom)"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'left')}
-                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2 h-3 bg-[#7367f0] border border-white cursor-ew-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'left');
+                        }}
+                        className="absolute top-1/2 -left-2 -translate-y-1/2 w-3 h-4 bg-[#7367f0] border-2 border-white cursor-ew-resize z-40 shadow-sm"
+                        title="Resize Width (Left)"
                       />
                       <div
-                        onMouseDown={(e) => handleMouseDown(e, idx, 'right')}
-                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2 h-3 bg-[#7367f0] border border-white cursor-ew-resize z-40"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleMouseDown(e, idx, 'right');
+                        }}
+                        className="absolute top-1/2 -right-2 -translate-y-1/2 w-3 h-4 bg-[#7367f0] border-2 border-white cursor-ew-resize z-40 shadow-sm"
+                        title="Resize Width (Right)"
                       />
                     </>
                   )}
@@ -691,8 +895,8 @@ export default function FieldEditor({
                 onClick={() => setActiveTab('properties')}
                 className={`py-2 px-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
                   activeTab === 'properties'
-                    ? 'border-b-2 border-[#7367f0] text-[#7367f0]'
-                    : 'text-[#6f6b7d] hover:text-[#2f2b3d]'
+                    ? 'border-b-2 border-[#7367f0]'
+                    : 'hover:text-[#2f2b3d]'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -745,6 +949,18 @@ export default function FieldEditor({
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+
+                {isPreviewMode && (
+                  <div className="p-2.5 bg-[#f8f7fa] border border-[#7367f0]/30 text-xs">
+                    <div className="text-[10px] uppercase font-bold text-[#7367f0] flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      <span>Live Output (Sample {sampleIndex + 1})</span>
+                    </div>
+                    <div className="font-semibold text-black mt-1 break-words">
+                      &ldquo;{getSampleValue(selectedField, sampleRecipients.length > 0 ? sampleRecipients[sampleIndex % sampleRecipients.length] : null, sampleIndex)}&rdquo;
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="form-label">Field Name (Key) *</label>
@@ -962,7 +1178,7 @@ export default function FieldEditor({
                           <div className="text-[10px] text-[#6f6b7d]">Spreadsheet Column</div>
                         </div>
                         {isAlreadyAdded ? (
-                          <span className="text-[10px] font-bold text-[#28c76f] bg-[#28c76f]/10 px-2 py-0.5">
+                          <span className="text-[10px] px-2 py-0.5">
                             Added on Canvas
                           </span>
                         ) : (

@@ -95,11 +95,11 @@ export default function OrganizerAnalyticsPage() {
     <div className="space-y-6 animate-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#2f2b3d] tracking-tight flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-[#7367f0]" />
+        <h1 className="text-2xl tracking-tight flex items-center gap-2">
+          {/* <BarChart3 className="w-6 h-6 text-[#7367f0]" /> */}
           <span>Organization Analytics</span>
         </h1>
-        <p className="text-xs text-[#6f6b7d] mt-1">
+        <p className=" mt-1">
           Real-time metrics, download volume trends, and certificate engagement statistics
         </p>
       </div>
@@ -111,12 +111,10 @@ export default function OrganizerAnalyticsPage() {
           return (
             <div key={card.label} className="materio-card p-4 bg-white border border-[#dbdade]">
               <div className="flex items-center justify-between mb-2">
-                <div className={`p-2 ${card.bg} ${card.color}`}>
-                  <Icon className="w-4 h-4" />
-                </div>
+             
               </div>
-              <div className="text-2xl font-extrabold text-[#2f2b3d] tracking-tight">{card.value}</div>
-              <div className="text-[10px] font-bold text-[#6f6b7d] tracking-wider uppercase mt-1">
+              <div className="text-2xl  tracking-tight">{card.value}</div>
+              <div className="text-[10px]  tracking-wider uppercase mt-1">
                 {card.label}
               </div>
             </div>
@@ -129,11 +127,11 @@ export default function OrganizerAnalyticsPage() {
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-[#7367f0]" />
-            <h2 className="text-sm font-bold text-[#2f2b3d] uppercase tracking-wider">
+            <h2 className=" uppercase tracking-wider">
               Download Activity (Last 30 Days)
             </h2>
           </div>
-          <span className="text-xs text-[#6f6b7d] font-semibold bg-[#f8f7fa] px-2.5 py-1 border border-[#dbdade]">
+          <span className="px-2.5 py-1 ">
             30-Day Sum: {dailyDownloads.reduce((s, d) => s + d.count, 0)}
           </span>
         </div>
@@ -172,12 +170,12 @@ export default function OrganizerAnalyticsPage() {
         {/* Top Certificates */}
         <div className="materio-card p-5 bg-white border border-[#dbdade]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#ebebed]">
-            <Award className="w-4 h-4 text-[#00bad1]" />
-            <h2 className="text-sm font-bold text-[#2f2b3d] uppercase tracking-wider">Top Certificates</h2>
+            {/* <Award className="w-4 h-4 text-[#00bad1]" /> */}
+            <h2 className=" tracking-wider">Top Certificates</h2>
           </div>
 
           {topCertificates.length === 0 ? (
-            <div className="text-center py-8 text-xs text-[#6f6b7d]">No certificate activity recorded yet.</div>
+            <div className="text-center py-8 ]">No certificate activity recorded yet.</div>
           ) : (
             <div className="space-y-2.5">
               {topCertificates.slice(0, 6).map((cert, idx) => (
@@ -186,21 +184,21 @@ export default function OrganizerAnalyticsPage() {
                   className="flex items-center justify-between p-2.5 bg-[#f8f7fa] border border-[#ebebed]"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-xs font-bold text-[#7367f0] w-4">{idx + 1}</span>
+                    <span className=" w-4">{idx + 1}</span>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-[#2f2b3d] truncate">{cert.name}</div>
-                      <div className="text-[10px] text-[#6f6b7d] truncate">{cert.eventName}</div>
+                      <div className=" truncate">{cert.name}</div>
+                      <div className="text-[10px]  truncate">{cert.eventName}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <div className="text-right">
-                      <div className="text-xs font-extrabold text-[#7367f0]">{cert.downloads}</div>
-                      <div className="text-[9px] text-[#6f6b7d] uppercase">Downloads</div>
+                      <div className="">{cert.downloads}</div>
+                      <div className="">Downloads</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-extrabold text-[#00bad1]">{cert.recipients}</div>
-                      <div className="text-[9px] text-[#6f6b7d] uppercase">Recipients</div>
+                      <div className="">{cert.recipients}</div>
+                      <div className="">Recipients</div>
                     </div>
                   </div>
                 </div>
@@ -212,8 +210,8 @@ export default function OrganizerAnalyticsPage() {
         {/* Recent Activity */}
         <div className="materio-card p-5 bg-white border border-[#dbdade]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#ebebed]">
-            <Clock className="w-4 h-4 text-[#ff9f43]" />
-            <h2 className="text-sm font-bold text-[#2f2b3d] uppercase tracking-wider">Recent Downloads</h2>
+            {/* <Clock className="w-4 h-4 text-[#ff9f43]" /> */}
+            <h2 className="tracking-wider">Recent Downloads</h2>
           </div>
 
           {recentActivity.length === 0 ? (
@@ -230,7 +228,7 @@ export default function OrganizerAnalyticsPage() {
                       <ArrowUpRight className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-[#2f2b3d] truncate">{act.recipientName}</div>
+                      <div className="text-xs  text-[#2f2b3d] truncate">{act.recipientName}</div>
                       <div className="text-[10px] text-[#6f6b7d] truncate">{act.certName}</div>
                     </div>
                   </div>
