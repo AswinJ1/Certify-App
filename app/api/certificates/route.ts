@@ -28,8 +28,9 @@ export async function GET(request: NextRequest) {
     const certificates = await prisma.certificate.findMany({
       where,
       include: {
+        template: true,
         event: {
-          include: { organization: { select: { id: true, name: true } } },
+          include: { organization: { select: { id: true, name: true, logo: true } } },
         },
         _count: { select: { recipients: true, fields: true } },
       },

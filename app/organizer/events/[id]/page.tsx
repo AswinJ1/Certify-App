@@ -140,7 +140,7 @@ export default function OrganizerEventDetailPage() {
       {/* Back button */}
       <div>
         <button
-          className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+          className="cursor-pointer text-xs py-1.5 px-3 flex items-center gap-1.5"
           onClick={() => router.push('/organizer/events')}
         >
           <ArrowLeft className="w-3.5 h-3.5" />

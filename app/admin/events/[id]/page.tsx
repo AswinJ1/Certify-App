@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, Award, Users, Plus, ArrowLeft, X, ArrowRight, Building2 } from 'lucide-react';
+import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 
 interface Certificate {
   id: string;
   name: string;
   status: string;
   publicSlug: string;
+  template?: { id: string; fileKey: string } | null;
   _count: { recipients: number };
 }
 
@@ -182,29 +184,37 @@ export default function EventDetailPage() {
               <Link
                 key={cert.id}
                 href={`/admin/certificates/${cert.id}`}
-                className="no-underline text-inherit group"
+                className="no-underline text-inherit group block h-full"
               >
-                <div className="materio-card p-4 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col justify-between h-full">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 bg-[#00bad1]/10 text-[#00bad1] flex items-center justify-center flex-shrink-0">
-                        <Award className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-xs text-[#2f2b3d] group-hover:text-[#7367f0] transition-colors truncate">
-                          {cert.name}
-                        </h3>
-                        <div className="text-[10px] text-[#6f6b7d]">
-                          {cert._count.recipients} recipient(s)
-                        </div>
-                      </div>
+                <div className="materio-card bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col justify-between h-full overflow-hidden">
+                  <div className="h-36 bg-[#f8f7fa] border-b border-[#ebebed] overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                    <CertificateThumbnail
+                      url={cert.template?.fileKey}
+                      name={cert.name}
+                      className="w-full h-full"
+                    />
+                    <div className="absolute top-2.5 right-2.5 bg-white/95 px-2 py-0.5 text-[10px] text-black border border-[#dbdade] shadow-xs z-10">
+                      {cert.status}
                     </div>
-                    <span className={`badge badge-${cert.status.toLowerCase()}`}>{cert.status}</span>
                   </div>
 
-                  <div className="pt-2.5 border-t border-[#ebebed] flex items-center justify-between text-xs text-[#6f6b7d]">
-                    <span className="text-[11px] group-hover:text-[#7367f0] font-medium">Configure template</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#a5a2ad] group-hover:text-[#7367f0] transition-transform group-hover:translate-x-0.5" />
+                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm text-black font-semibold group-hover:text-[#7367f0] transition-colors line-clamp-1">
+                        {cert.name}
+                      </h3>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#ebebed] flex items-center justify-between text-xs text-black">
+                      <span className="flex items-center gap-1 text-[#6f6b7d]">
+                        <Users className="w-3.5 h-3.5 text-[#a5a2ad]" />
+                        <span>{cert._count.recipients} recipients</span>
+                      </span>
+                      <span className="text-[#7367f0] flex items-center gap-1">
+                        <span>Configure</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>

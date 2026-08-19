@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Award, Plus, Calendar, Building2, ArrowRight } from 'lucide-react';
+import { Award, Plus, Calendar, Building2, ArrowRight, LayoutGrid, List, Users } from 'lucide-react';
+import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 
 interface Certificate {
   id: string;
   name: string;
   status: string;
   publicSlug: string;
+  template?: { id: string; fileKey: string } | null;
   event: {
     name: string;
-    organization: { id: string; name: string };
+    organization: { id: string; name: string; logo?: string | null };
   };
   _count: { recipients: number; fields: number };
 }
@@ -19,6 +21,7 @@ interface Certificate {
 export default function CertificatesPage() {
   const [certs, setCerts] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     fetch('/api/certificates')
@@ -28,18 +31,47 @@ export default function CertificatesPage() {
   }, []);
 
   return (
-    <div className="space-y-6 animate-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-in text-black">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#2f2b3d] tracking-tight">All Platform Certificates</h1>
-          <p className="text-xs text-[#6f6b7d] mt-1">Manage certificate templates and recipient mappings across all institutions</p>
+          <h1 className="text-xl text-black">Platform Certificates</h1>
+          <p className="text-black mt-0.5">
+            Manage certificate templates, visual canvas placements, and datasets across all institutions
+          </p>
         </div>
-        <Link href="/admin/events" className="no-underline">
-          <button className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm">
-            <Plus className="w-4 h-4" />
-            <span>New Certificate</span>
-          </button>
-        </Link>
+
+        <div className="flex items-center gap-2.5">
+          {/* Grid / List Toggle */}
+          <div className="flex items-center border border-[#dbdade] bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 transition-colors cursor-pointer ${
+                viewMode === 'grid' ? 'bg-[#7367f0] text-white' : 'text-[#6f6b7d] hover:text-black'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 transition-colors cursor-pointer ${
+                viewMode === 'list' ? 'bg-[#7367f0] text-white' : 'text-[#6f6b7d] hover:text-black'
+              }`}
+              title="List View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+
+          <Link href="/admin/events" className="no-underline">
+            <button className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap">
+              <Plus className="w-4 h-4" />
+              <span>New Certificate</span>
+            </button>
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -48,16 +80,72 @@ export default function CertificatesPage() {
         </div>
       ) : certs.length === 0 ? (
         <div className="materio-card p-12 text-center bg-white border border-[#dbdade] max-w-lg mx-auto mt-8">
-          <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center mx-auto mb-3">
-            <Award className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-[#2f2b3d] mb-1">No certificates configured yet</h3>
-          <p className="text-xs text-[#6f6b7d] mb-5">Create an event first, then add certificate templates to it.</p>
+          <Award className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" />
+          <h3 className="text-black mb-1">No certificates configured yet</h3>
+          <p className="text-black mb-5">Create an event first, then add certificate templates to it.</p>
           <Link href="/admin/events" className="no-underline">
-            <button className="btn-primary text-xs py-2 px-4">Go to Events</button>
+            <button className="btn-primary text-xs py-2 px-4 cursor-pointer">Go to Events</button>
           </Link>
         </div>
+      ) : viewMode === 'grid' ? (
+        /* ── Grid View: Embedded Certificate Previews ── */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {certs.map((cert) => (
+            <Link
+              key={cert.id}
+              href={`/admin/certificates/${cert.id}`}
+              className="no-underline text-inherit group block h-full"
+            >
+              <div className="materio-card bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col justify-between h-full overflow-hidden">
+                {/* Embedded Template Preview Canvas */}
+                <div className="h-44 bg-[#f8f7fa] border-b border-[#ebebed] overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                  <CertificateThumbnail
+                    url={cert.template?.fileKey}
+                    name={cert.name}
+                    className="w-full h-full"
+                  />
+                  {cert.event.organization.logo && (
+                    <div className="absolute top-2.5 left-2.5 bg-white/95 px-2 py-1 border border-[#dbdade] shadow-xs max-w-[100px] z-10">
+                      <img
+                        src={cert.event.organization.logo}
+                        alt={cert.event.organization.name}
+                        className="h-4 object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute top-2.5 right-2.5 bg-white/95 px-2 py-0.5 text-[10px] text-black border border-[#dbdade] shadow-xs z-10">
+                    {cert.status}
+                  </div>
+                </div>
+
+                {/* Body info */}
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] text-[#6f6b7d] uppercase tracking-wider mb-1 truncate">
+                      {cert.event.name} · {cert.event.organization.name}
+                    </div>
+                    <h3 className="text-base font-semibold text-black group-hover:text-[#7367f0] transition-colors line-clamp-1">
+                      {cert.name}
+                    </h3>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#ebebed] flex items-center justify-between text-xs text-black">
+                    <span className="flex items-center gap-1 text-[#6f6b7d]">
+                      <Users className="w-3.5 h-3.5 text-[#a5a2ad]" />
+                      <span>{cert._count.recipients} recipients</span>
+                    </span>
+                    <span className="text-[#7367f0] flex items-center gap-1 font-medium">
+                      <span>Studio</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       ) : (
+        /* ── List View ── */
         <div className="space-y-3">
           {certs.map((cert) => (
             <Link
@@ -65,24 +153,34 @@ export default function CertificatesPage() {
               href={`/admin/certificates/${cert.id}`}
               className="no-underline text-inherit block group"
             >
-              <div className="materio-card p-4 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center flex-shrink-0 group-hover:bg-[#7367f0] group-hover:text-white transition-colors">
-                    <Award className="w-5 h-5" />
+              <div className="materio-card p-3.5 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-16 h-12 bg-[#f8f7fa] border border-[#dbdade] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    <CertificateThumbnail
+                      url={cert.template?.fileKey}
+                      name={cert.name}
+                      className="w-full h-full"
+                    />
                   </div>
+
                   <div className="min-w-0">
-                    <div className="font-bold text-sm text-[#2f2b3d] group-hover:text-[#7367f0] transition-colors truncate">
+                    <div className="text-black font-semibold group-hover:text-[#7367f0] transition-colors truncate">
                       {cert.name}
                     </div>
                     <div className="text-xs text-[#6f6b7d] mt-0.5 flex items-center gap-2 truncate">
-                      <span className="flex items-center gap-1 font-medium text-[#2f2b3d]">
-                        <Calendar className="w-3 h-3 text-[#00bad1]" />
-                        {cert.event.name}
-                      </span>
+                      <span className="truncate">{cert.event.name}</span>
                       <span>·</span>
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3 h-3 text-[#7367f0]" />
-                        {cert.event.organization.name}
+                      <span className="flex items-center gap-1.5 truncate">
+                        {cert.event.organization.logo ? (
+                          <img
+                            src={cert.event.organization.logo}
+                            alt={cert.event.organization.name}
+                            className="h-3.5 max-w-[50px] object-contain flex-shrink-0"
+                          />
+                        ) : (
+                          <Building2 className="w-3 h-3 text-[#7367f0] flex-shrink-0" />
+                        )}
+                        <span className="truncate">{cert.event.organization.name}</span>
                       </span>
                     </div>
                   </div>
@@ -90,16 +188,18 @@ export default function CertificatesPage() {
 
                 <div className="flex items-center gap-6 self-end sm:self-auto">
                   <div className="text-right">
-                    <div className="font-extrabold text-sm text-[#2f2b3d]">{cert._count.recipients}</div>
+                    <div className="text-black font-semibold">{cert._count.recipients}</div>
                     <div className="text-[10px] text-[#6f6b7d] uppercase tracking-wider">Recipients</div>
                   </div>
 
                   <div className="text-right">
-                    <div className="font-extrabold text-sm text-[#7367f0]">{cert._count.fields}</div>
+                    <div className="text-black font-semibold">{cert._count.fields}</div>
                     <div className="text-[10px] text-[#6f6b7d] uppercase tracking-wider">Fields</div>
                   </div>
 
-                  <span className={`badge badge-${cert.status.toLowerCase()}`}>{cert.status}</span>
+                  <span className="text-xs text-black border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa]">
+                    {cert.status}
+                  </span>
 
                   <ArrowRight className="w-4 h-4 text-[#a5a2ad] group-hover:text-[#7367f0] group-hover:translate-x-1 transition-all" />
                 </div>

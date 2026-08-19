@@ -19,6 +19,14 @@ import {
   Layers,
 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 
 interface RecipientEntry {
   id: string;
@@ -210,18 +218,18 @@ export default function OrganizerRecipientsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="data-table w-full text-left text-xs">
-              <thead>
-                <tr className="bg-[#f8f7fa] border-b border-[#dbdade]">
-                  <th className="py-3 px-4 text-black">PARTICIPANT DETAILS</th>
-                  <th className="py-3 px-4 text-black">CERTIFICATE & EVENT</th>
-                  <th className="py-3 px-4 text-black">DOWNLOADS</th>
-                  <th className="py-3 px-4 text-black">STATUS</th>
-                  <th className="py-3 px-4 text-black">DATA FIELDS</th>
-                  <th className="py-3 px-4 text-black">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#ebebed]">
+            <Table className="w-full text-left text-xs">
+              <TableHeader>
+                <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">PARTICIPANT DETAILS</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">CERTIFICATE & EVENT</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">DOWNLOADS</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">STATUS</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">DATA FIELDS</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">ACTIONS</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {recipients.map((r) => {
                   const initials = r.displayName
                     ? r.displayName
@@ -234,21 +242,20 @@ export default function OrganizerRecipientsPage() {
 
                   return (
                     <Fragment key={r.id}>
-                      <tr
+                      <TableRow
                         onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                        className="cursor-pointer hover:bg-[#f8f7fa] transition-colors"
+                        className="cursor-pointer hover:bg-[#f8f7fa] transition-colors border-b border-[#ebebed]"
                       >
                         {/* Name & Contact */}
-                        <td className="py-3 px-4">
+                        <TableCell className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-[#7367f0]/10 text-[#7367f0] text-xs flex items-center justify-center flex-shrink-0">
                               {initials}
                             </div>
                             <div>
-                              <div className="text-xs text-black">{r.displayName}</div>
+                              <div className="text-xs text-black font-semibold">{r.displayName}</div>
                               {r.email ? (
-                                <div className="text-[11px] text-black flex items-center gap-1">
-                                  {/* <Mail className="w-3 h-3 text-[#a5a2ad]" /> */}
+                                <div className="text-[11px] text-[#6f6b7d] flex items-center gap-1">
                                   <span>{r.email}</span>
                                 </div>
                               ) : (
@@ -256,41 +263,37 @@ export default function OrganizerRecipientsPage() {
                               )}
                             </div>
                           </div>
-                        </td>
+                        </TableCell>
 
                         {/* Certificate & Event */}
-                        <td className="py-3 px-4">
+                        <TableCell className="py-3 px-4">
                           <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs text-black">
-                              {/* <Award className="w-3.5 h-3.5 text-[#7367f0]" /> */}
+                            <div className="text-xs text-black font-medium">
                               <span>{r.certificateName}</span>
                             </div>
-                            <div className="text-[11px] text-[#6f6b7d] flex items-center gap-1">
-                              {/* <Building2 className="w-3 h-3 text-[#a5a2ad]" /> */}
+                            <div className="text-[11px] text-[#6f6b7d]">
                               <span>{r.eventName}</span>
                             </div>
                           </div>
-                        </td>
+                        </TableCell>
 
                         {/* Downloads */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5 text-xs text-black">
+                        <TableCell className="py-3 px-4">
+                          <div className="flex items-center gap-1.5 text-xs text-black font-mono">
                             <Download className="w-3.5 h-3.5 text-[#a5a2ad]" />
                             <span>{r.downloads}</span>
                           </div>
-                        </td>
+                        </TableCell>
 
                         {/* Status */}
-                        <td className="py-3 px-4">
-                          {r.hasGenerated ? (
-                            <span className="">CLAIMED</span>
-                          ) : (
-                            <span className="">AVAILABLE</span>
-                          )}
-                        </td>
+                        <TableCell className="py-3 px-4">
+                          <span className="text-[11px] font-semibold border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa]">
+                            {r.hasGenerated ? 'CLAIMED' : 'AVAILABLE'}
+                          </span>
+                        </TableCell>
 
                         {/* Data Column Pill */}
-                        <td className="py-3 px-4">
+                        <TableCell className="py-3 px-4">
                           <button
                             type="button"
                             className="text-xs text-[#7367f0] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
@@ -306,10 +309,10 @@ export default function OrganizerRecipientsPage() {
                               <ChevronDown className="w-3 h-3" />
                             )}
                           </button>
-                        </td>
+                        </TableCell>
 
                         {/* Actions */}
-                        <td className="py-3 px-4">
+                        <TableCell className="py-3 px-4">
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <a
                               href={`/c/${r.publicSlug}`}
@@ -321,37 +324,37 @@ export default function OrganizerRecipientsPage() {
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
 
                       {/* Expanded Recipient Data Sheet */}
                       {expandedId === r.id && (
-                        <tr>
-                          <td colSpan={6} className="bg-[#f8f7fa] p-4 border-b border-[#dbdade]">
+                        <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
+                          <TableCell colSpan={6} className="p-4">
                             <div className="text-[11px] text-black mb-2 flex items-center justify-between">
-                              <span>Imported Spreadsheet Values for this Recipient:</span>
+                              <span className="font-semibold">Imported Spreadsheet Values for this Recipient:</span>
                               <span className="text-[10px] text-[#a5a2ad]">Record ID: {r.id}</span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                               {Object.entries(r.data).map(([key, val]) => (
                                 <div key={key} className="p-2.5 bg-white border border-[#dbdade]">
-                                  <div className="text-[10px] text-[#7367f0] truncate">
+                                  <div className="text-[10px] text-[#7367f0] font-mono truncate">
                                     {key}
                                   </div>
-                                  <div className="text-xs text-black mt-0.5 truncate">
+                                  <div className="text-xs text-black mt-0.5 truncate font-medium">
                                     {val || '—'}
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
                     </Fragment>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
 

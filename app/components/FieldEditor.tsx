@@ -925,7 +925,7 @@ export default function FieldEditor({
                   }`}
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-[#28c76f]" />
-                  <span>Columns ({datasetColumns.length})</span>
+                  <span>Columns</span>
                 </button>
               )}
             </div>
@@ -937,7 +937,7 @@ export default function FieldEditor({
                   <div className="flex items-center gap-2">
                     <Type className="w-4 h-4 text-[#7367f0]" />
                     <span className="font-bold text-sm text-[#2f2b3d]">
-                      Field #{selectedIdx + 1}
+                      Field 
                     </span>
                   </div>
                   <button

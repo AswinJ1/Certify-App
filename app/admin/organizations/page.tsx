@@ -8,6 +8,7 @@ interface Organization {
   id: string;
   name: string;
   email: string | null;
+  logo: string | null;
   status: string;
   createdAt: string;
   _count: { events: number; members: number };
@@ -19,6 +20,7 @@ export default function OrganizationsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
+  const [formLogo, setFormLogo] = useState('');
   const [creating, setCreating] = useState(false);
 
   const loadOrgs = () => {
@@ -32,6 +34,16 @@ export default function OrganizationsPage() {
     loadOrgs();
   }, []);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormLogo(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
@@ -39,11 +51,12 @@ export default function OrganizationsPage() {
       const res = await fetch('/api/organizations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: formName, email: formEmail }),
+        body: JSON.stringify({ name: formName, email: formEmail, logo: formLogo || null }),
       });
       if (res.ok) {
         setFormName('');
         setFormEmail('');
+        setFormLogo('');
         setShowCreate(false);
         loadOrgs();
       }
@@ -53,14 +66,16 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in text-black">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#2f2b3d] tracking-tight">Organizations</h1>
-          <p className="text-xs text-[#6f6b7d] mt-1">Manage institutions, universities, and multi-tenant groups</p>
+          <h1 className="text-xl text-black">Organizations</h1>
+          <p className="text-black mt-0.5">
+            Manage institutions, universities, and multi-tenant groups
+          </p>
         </div>
         <button
-          className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm"
+          className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm cursor-pointer"
           onClick={() => setShowCreate(true)}
         >
           <Plus className="w-4 h-4" />
@@ -74,14 +89,12 @@ export default function OrganizationsPage() {
         </div>
       ) : orgs.length === 0 ? (
         <div className="materio-card p-12 text-center bg-white border border-[#dbdade] max-w-lg mx-auto mt-8">
-          <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center mx-auto mb-3">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-[#2f2b3d] mb-1">No organizations created yet</h3>
-          <p className="text-xs text-[#6f6b7d] mb-5">
+          <Building2 className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" />
+          <h3 className="text-sm text-black mb-1">No organizations created yet</h3>
+          <p className="text-xs text-black mb-5">
             Create your primary institution to begin hosting events and certificate templates.
           </p>
-          <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
+          <button className="btn-primary text-xs py-2 px-4 cursor-pointer" onClick={() => setShowCreate(true)}>
             <Plus className="w-4 h-4" />
             <span>Create First Organization</span>
           </button>
@@ -92,12 +105,19 @@ export default function OrganizationsPage() {
             <Link key={org.id} href={`/admin/organizations/${org.id}`} className="no-underline text-inherit group">
               <div className="materio-card p-5 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col justify-between h-full">
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center flex-shrink-0 group-hover:bg-[#7367f0] group-hover:text-white transition-colors">
-                      <Building2 className="w-5 h-5" />
-                    </div>
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {org.logo ? (
+                      <div className="w-12 h-12 bg-white border border-[#dbdade] flex items-center justify-center p-1 flex-shrink-0">
+                        <img src={org.logo} alt={org.name} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] border border-[#7367f0]/20 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-6 h-6" />
+                      </div>
+                    )}
+
                     <div className="min-w-0">
-                      <h3 className="font-bold text-sm text-[#2f2b3d] group-hover:text-[#7367f0] transition-colors truncate">
+                      <h3 className="font-semibold text-sm text-black group-hover:text-[#7367f0] transition-colors truncate">
                         {org.name}
                       </h3>
                       <div className="text-xs text-[#6f6b7d] truncate flex items-center gap-1.5 mt-0.5">
@@ -107,23 +127,25 @@ export default function OrganizationsPage() {
                             <span>{org.email}</span>
                           </>
                         ) : (
-                          'No email registered'
+                          'No official email registered'
                         )}
                       </div>
                     </div>
                   </div>
-                  <span className={`badge badge-${org.status.toLowerCase()} flex-shrink-0`}>{org.status}</span>
+                  <span className="text-xs text-black border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa] flex-shrink-0">
+                    {org.status}
+                  </span>
                 </div>
 
                 <div className="pt-3 border-t border-[#ebebed] flex items-center justify-between text-xs">
                   <div className="flex items-center gap-4 text-[#6f6b7d]">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-[#00bad1]" />
-                      <strong className="text-[#2f2b3d]">{org._count.events}</strong> Events
+                      <strong className="text-black">{org._count.events}</strong> Events
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-[#7367f0]" />
-                      <strong className="text-[#2f2b3d]">{org._count.members}</strong> Members
+                      <strong className="text-black">{org._count.members}</strong> Members
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#a5a2ad] group-hover:text-[#7367f0] group-hover:translate-x-0.5 transition-all" />
@@ -137,7 +159,7 @@ export default function OrganizationsPage() {
       {/* Create Modal */}
       {showCreate && (
         <div className="modal-overlay animate-in" onClick={() => setShowCreate(false)}>
-          <div className="modal-content relative bg-white" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content relative bg-white max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowCreate(false)}
               className="absolute top-4 right-4 p-1 text-[#6f6b7d] hover:text-[#2f2b3d] bg-transparent border-0 cursor-pointer"
@@ -148,27 +170,59 @@ export default function OrganizationsPage() {
               <Building2 className="w-5 h-5 text-[#7367f0]" />
               <h2 className="text-base font-bold text-[#2f2b3d]">Create Organization</h2>
             </div>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-3.5">
               <div>
                 <label className="form-label">Organization Name *</label>
                 <input
                   className="form-input text-xs"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Amrita Vishwa Vidyapeetham"
+                  placeholder="e.g. Amrita Vishwa Vidyapeetham / IEEE Student Branch"
                   required
                 />
               </div>
+
               <div>
-                <label className="form-label">Official Contact Email</label>
+                <label className="form-label">Official Inquiries Email</label>
                 <input
                   className="form-input text-xs"
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  placeholder="admin@amrita.edu"
+                  placeholder="e.g. events@university.edu"
                 />
               </div>
+
+              <div>
+                <label className="form-label">Organization Logo</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                      <span className="text-[#7367f0] font-semibold">Upload Logo</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
+
+                  {formLogo && (
+                    <div className="flex items-center gap-2 p-2 bg-[#f8f7fa] border border-[#dbdade]">
+                      <img src={formLogo} alt="Logo preview" className="h-8 max-w-[100px] object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setFormLogo('')}
+                        className="text-xs text-[#ea5455] hover:underline ml-auto cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-2 justify-end pt-3 border-t border-[#ebebed]">
                 <button type="button" className="btn-secondary text-xs" onClick={() => setShowCreate(false)}>
                   Cancel
