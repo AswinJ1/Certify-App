@@ -74,11 +74,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Delete old recipients for this certificate before importing new ones
     await prisma.recipient.deleteMany({ where: { certificateId: id } });
 
-    // Create dataset record (store UploadThing URL)
+    // Create dataset record
     const dataset = await prisma.dataset.create({
       data: {
         certificateId: id,
-        fileKey: fileUrl, // UploadThing URL
+        fileKey: fileUrl,
         fileName,
         fileType,
         status: 'PROCESSED',
@@ -86,78 +86,78 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // Create column records
-    const columns = await Promise.all(
-      headers.map((header, index) =>
-        prisma.datasetColumn.create({
-          data: {
-            datasetId: dataset.id,
-            columnName: header,
-            dataType: 'string',
-            columnIndex: index,
-          },
-        })
-      )
-    );
+    // Create column records with pre-generated UUIDs
+    const columnData = headers.map((header, index) => ({
+      id: uuidv4(),
+      datasetId: dataset.id,
+      columnName: header,
+      dataType: 'string',
+      columnIndex: index,
+    }));
+
+    await prisma.datasetColumn.createMany({
+      data: columnData,
+    });
 
     // Auto-create fields & mappings if certificate currently has no fields
     const existingFields = await prisma.certificateField.findMany({ where: { certificateId: id } });
     if (existingFields.length === 0) {
-      const createdFields = await Promise.all(
-        columns.map((col, idx) => {
-          const rawName = col.columnName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '') || `field_${idx + 1}`;
-          return prisma.certificateField.create({
-            data: {
-              certificateId: id,
-              name: rawName,
-              label: col.columnName,
-              type: 'TEXT',
-              positionX: 180,
-              positionY: Math.min(500, 200 + (idx * 45)),
-              width: 480,
-              height: 38,
-              fontFamily: idx === 0 ? 'HelveticaBold' : 'Helvetica',
-              fontSize: idx === 0 ? 22 : 15,
-              fontColor: '#1a1824',
-              alignment: 'CENTER',
-              required: idx === 0,
-              sortOrder: idx,
-            },
-          });
-        })
-      );
+      const fieldData = columnData.map((col, idx) => {
+        const rawName = col.columnName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '') || `field_${idx + 1}`;
+        return {
+          id: uuidv4(),
+          certificateId: id,
+          name: rawName,
+          label: col.columnName,
+          type: 'TEXT' as const,
+          positionX: 180,
+          positionY: Math.min(500, 200 + (idx * 45)),
+          width: 480,
+          height: 38,
+          fontFamily: idx === 0 ? 'HelveticaBold' : 'Helvetica',
+          fontSize: idx === 0 ? 22 : 15,
+          fontColor: '#1a1824',
+          alignment: 'CENTER' as const,
+          required: idx === 0,
+          sortOrder: idx,
+        };
+      });
 
-      // Auto create field mappings with correct schema properties
-      await Promise.all(
-        createdFields.map((field, idx) => {
-          const col = columns[idx];
-          return prisma.fieldMapping.create({
-            data: {
-              certificateId: id,
-              datasetColumnId: col.id,
-              certificateFieldId: field.id,
-            },
-          });
-        })
-      );
+      await prisma.certificateField.createMany({
+        data: fieldData,
+      });
+
+      const mappingData = fieldData.map((field, idx) => ({
+        id: uuidv4(),
+        certificateId: id,
+        datasetColumnId: columnData[idx].id,
+        certificateFieldId: field.id,
+      }));
+
+      await prisma.fieldMapping.createMany({
+        data: mappingData,
+      });
     }
 
-    // Create recipient records from each row
-    const recipients = await Promise.all(
-      jsonData.map((row) =>
-        prisma.recipient.create({
-          data: {
-            certificateId: id,
-            externalId: uuidv4().substring(0, 8),
-            data: row as object,
-          },
-        })
-      )
-    );
+    // Bulk insert recipients in chunks of 500 to avoid connection pool exhaustion
+    const recipientData = jsonData.map((row) => ({
+      id: uuidv4(),
+      certificateId: id,
+      externalId: uuidv4().substring(0, 8),
+      data: row as object,
+    }));
+
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < recipientData.length; i += CHUNK_SIZE) {
+      const chunk = recipientData.slice(i, i + CHUNK_SIZE);
+      await prisma.recipient.createMany({
+        data: chunk,
+      });
+    }
 
     return NextResponse.json({
-      dataset: { ...dataset, columns },
-      recipientCount: recipients.length,
+      dataset: { ...dataset, columns: columnData },
+      recipientCount: recipientData.length,
       sampleData: jsonData.slice(0, 5),
     }, { status: 201 });
   } catch (error) {

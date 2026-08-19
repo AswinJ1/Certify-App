@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -52,22 +53,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { certificateId: id },
     });
 
-    // Create new mappings
-    const created = await Promise.all(
-      normalizedMappings.map((m) =>
-        prisma.fieldMapping.create({
-          data: {
-            certificateId: id,
-            datasetColumnId: m.datasetColumnId,
-            certificateFieldId: m.certificateFieldId,
-          },
-          include: {
-            datasetColumn: true,
-            certificateField: true,
-          },
-        })
-      )
-    );
+    // Create new mappings in bulk
+    if (normalizedMappings.length > 0) {
+      await prisma.fieldMapping.createMany({
+        data: normalizedMappings.map((m) => ({
+          id: uuidv4(),
+          certificateId: id,
+          datasetColumnId: m.datasetColumnId,
+          certificateFieldId: m.certificateFieldId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    const created = await prisma.fieldMapping.findMany({
+      where: { certificateId: id },
+      include: {
+        datasetColumn: true,
+        certificateField: true,
+      },
+    });
 
     return NextResponse.json({ mappings: created }, { status: 201 });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -38,28 +39,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { certificateId: id },
     });
 
-    const created = await Promise.all(
-      fields.map((field: Record<string, unknown>, index: number) =>
-        prisma.certificateField.create({
-          data: {
-            certificateId: id,
-            name: field.name as string,
-            label: (field.label as string) || (field.name as string),
-            type: (field.type as 'TEXT' | 'DATE' | 'NUMBER' | 'EMAIL' | 'URL') || 'TEXT',
-            positionX: (field.positionX as number) || 0,
-            positionY: (field.positionY as number) || 0,
-            width: (field.width as number) || 200,
-            height: (field.height as number) || 30,
-            fontFamily: (field.fontFamily as string) || 'Helvetica',
-            fontSize: (field.fontSize as number) || 16,
-            fontColor: (field.fontColor as string) || '#000000',
-            alignment: (field.alignment as 'LEFT' | 'CENTER' | 'RIGHT') || 'CENTER',
-            required: (field.required as boolean) || false,
-            sortOrder: index,
-          },
-        })
-      )
-    );
+    if (fields.length > 0) {
+      await prisma.certificateField.createMany({
+        data: fields.map((field: Record<string, unknown>, index: number) => ({
+          id: (field.id as string) || uuidv4(),
+          certificateId: id,
+          name: field.name as string,
+          label: (field.label as string) || (field.name as string),
+          type: (field.type as 'TEXT' | 'DATE' | 'NUMBER' | 'EMAIL' | 'URL') || 'TEXT',
+          positionX: (field.positionX as number) || 0,
+          positionY: (field.positionY as number) || 0,
+          width: (field.width as number) || 200,
+          height: (field.height as number) || 30,
+          fontFamily: (field.fontFamily as string) || 'Helvetica',
+          fontSize: (field.fontSize as number) || 16,
+          fontColor: (field.fontColor as string) || '#000000',
+          alignment: (field.alignment as 'LEFT' | 'CENTER' | 'RIGHT') || 'CENTER',
+          required: (field.required as boolean) || false,
+          sortOrder: index,
+        })),
+      });
+    }
+
+    const created = await prisma.certificateField.findMany({
+      where: { certificateId: id },
+      orderBy: { sortOrder: 'asc' },
+    });
 
     return NextResponse.json({ fields: created }, { status: 201 });
   } catch (error) {
