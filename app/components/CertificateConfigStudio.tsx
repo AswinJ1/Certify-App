@@ -309,11 +309,12 @@ export default function CertificateConfigStudio({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ formFields }),
       });
+      const data = await res.json();
       if (res.ok) {
         showToast('Lookup form configuration saved!');
         loadCert();
       } else {
-        showToast('Failed to save form configuration', 'error');
+        showToast(data.error || 'Failed to save form configuration', 'error');
       }
     } catch {
       showToast('Network error while saving form', 'error');

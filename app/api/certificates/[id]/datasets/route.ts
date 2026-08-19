@@ -71,10 +71,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const headers = Object.keys(jsonData[0]);
     const fileType = ext === 'csv' ? 'csv' : 'xlsx';
 
-    // Delete old recipients for this certificate before importing new ones
+    // Clean up previous dataset records, recipients, form fields, and mappings for a clean replacement
+    await prisma.formField.deleteMany({ where: { certificateId: id } });
+    await prisma.fieldMapping.deleteMany({ where: { certificateId: id } });
     await prisma.recipient.deleteMany({ where: { certificateId: id } });
+    await prisma.dataset.deleteMany({ where: { certificateId: id } });
 
-    // Create dataset record
+    // Create new dataset record
     const dataset = await prisma.dataset.create({
       data: {
         certificateId: id,
@@ -99,8 +102,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: columnData,
     });
 
-    // Auto-create fields & mappings if certificate currently has no fields
+    // Check if certificate already has fields; if not, automatically populate fields & mappings from columns
     const existingFields = await prisma.certificateField.findMany({ where: { certificateId: id } });
+    let currentFields = existingFields;
+
     if (existingFields.length === 0) {
       const fieldData = columnData.map((col, idx) => {
         const rawName = col.columnName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '') || `field_${idx + 1}`;
@@ -127,19 +132,48 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         data: fieldData,
       });
 
-      const mappingData = fieldData.map((field, idx) => ({
-        id: uuidv4(),
-        certificateId: id,
-        datasetColumnId: columnData[idx].id,
-        certificateFieldId: field.id,
-      }));
+      currentFields = await prisma.certificateField.findMany({ where: { certificateId: id } });
+    }
 
+    // Automatically map columns to matching certificate fields by name or index
+    const mappingData = currentFields.map((field, idx) => {
+      const matchingCol = columnData.find(
+        (c) => c.columnName.toLowerCase() === field.name.toLowerCase() || c.columnName.toLowerCase() === field.label.toLowerCase()
+      ) || columnData[idx];
+
+      return matchingCol
+        ? {
+            id: uuidv4(),
+            certificateId: id,
+            datasetColumnId: matchingCol.id,
+            certificateFieldId: field.id,
+          }
+        : null;
+    }).filter(Boolean) as { id: string; certificateId: string; datasetColumnId: string; certificateFieldId: string }[];
+
+    if (mappingData.length > 0) {
       await prisma.fieldMapping.createMany({
         data: mappingData,
       });
     }
 
-    // Bulk insert recipients in chunks of 500 to avoid connection pool exhaustion
+    // Auto-create default lookup form fields for the first 1-2 primary columns (e.g. Name, Roll Number, Email)
+    const defaultFormCols = columnData.slice(0, 2);
+    if (defaultFormCols.length > 0) {
+      await prisma.formField.createMany({
+        data: defaultFormCols.map((col, idx) => ({
+          id: uuidv4(),
+          certificateId: id,
+          datasetColumnId: col.id,
+          label: col.columnName,
+          inputType: col.columnName.toLowerCase().includes('email') ? 'email' : 'text',
+          required: true,
+          sortOrder: idx,
+        })),
+      });
+    }
+
+    // Bulk insert recipients in chunks of 500
     const recipientData = jsonData.map((row) => ({
       id: uuidv4(),
       certificateId: id,
