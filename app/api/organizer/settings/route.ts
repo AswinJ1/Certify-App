@@ -6,7 +6,12 @@ import { requireAuth } from '@/lib/auth';
 export async function GET() {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId = user.organizationMembers?.[0]?.organizationId;
+
+    if (!orgId && user.role === 'SUPER_ADMIN') {
+      const firstOrg = await prisma.organization.findFirst();
+      orgId = firstOrg?.id;
+    }
 
     if (!orgId) {
       return NextResponse.json({ organization: null });
@@ -34,7 +39,12 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId = user.organizationMembers?.[0]?.organizationId;
+
+    if (!orgId && user.role === 'SUPER_ADMIN') {
+      const firstOrg = await prisma.organization.findFirst();
+      orgId = firstOrg?.id;
+    }
 
     if (!orgId) {
       return NextResponse.json({ error: 'No organization linked' }, { status: 400 });
