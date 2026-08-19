@@ -34,10 +34,10 @@ export async function GET() {
       : {};
 
     const [eventsCount, certsCount, recipientsCount, downloadsCount] = await Promise.all([
-      prisma.event.count({ where: eventWhere }),
-      prisma.certificate.count({ where: certWhere }),
-      prisma.recipient.count({ where: recipientWhere }),
-      prisma.downloadLog.count({ where: downloadWhere }),
+      prisma.event.count({ where: eventWhere }).catch(() => 0),
+      prisma.certificate.count({ where: certWhere }).catch(() => 0),
+      prisma.recipient.count({ where: recipientWhere }).catch(() => 0),
+      prisma.downloadLog.count({ where: downloadWhere }).catch(() => 0),
     ]);
 
     const recentEvents = await prisma.event.findMany({
@@ -47,7 +47,7 @@ export async function GET() {
       include: {
         _count: { select: { certificates: true } },
       },
-    });
+    }).catch(() => []);
 
     const recentCertificates = await prisma.certificate.findMany({
       where: certWhere,
@@ -57,7 +57,7 @@ export async function GET() {
         event: { select: { id: true, name: true } },
         _count: { select: { recipients: true, generatedCertificates: true } },
       },
-    });
+    }).catch(() => []);
 
     return NextResponse.json({
       stats: {
@@ -72,6 +72,7 @@ export async function GET() {
   } catch (error) {
     console.error('Organizer stats error:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
