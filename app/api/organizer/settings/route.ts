@@ -6,11 +6,11 @@ import { requireAuth } from '@/lib/auth';
 export async function GET() {
   try {
     const user = await requireAuth();
-    let orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId: string | undefined = user.organizationMembers?.[0]?.organizationId;
 
     if (!orgId && user.role === 'SUPER_ADMIN') {
       const firstOrg = await prisma.organization.findFirst();
-      orgId = firstOrg?.id;
+      if (firstOrg) orgId = firstOrg.id;
     }
 
     if (!orgId) {
@@ -39,11 +39,11 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth();
-    let orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId: string | undefined = user.organizationMembers?.[0]?.organizationId;
 
     if (!orgId && user.role === 'SUPER_ADMIN') {
       const firstOrg = await prisma.organization.findFirst();
-      orgId = firstOrg?.id;
+      if (firstOrg) orgId = firstOrg.id;
     }
 
     if (!orgId) {

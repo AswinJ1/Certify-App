@@ -48,11 +48,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
-    let orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId: string | undefined = user.organizationMembers?.[0]?.organizationId;
 
     if (!orgId && user.role === 'SUPER_ADMIN') {
       const firstOrg = await prisma.organization.findFirst();
-      orgId = firstOrg?.id;
+      if (firstOrg) orgId = firstOrg.id;
     }
 
     const { name, eventId } = await request.json();
@@ -63,8 +63,11 @@ export async function POST(request: NextRequest) {
 
     // Verify the event exists and belongs to this organization
     if (user.role !== 'SUPER_ADMIN') {
+      if (!orgId) {
+        return NextResponse.json({ error: 'No organization linked' }, { status: 400 });
+      }
       const event = await prisma.event.findFirst({
-        where: { id: eventId, organizationId: orgId! },
+        where: { id: eventId, organizationId: orgId },
       });
       if (!event) {
         return NextResponse.json({ error: 'Event not found or unauthorized' }, { status: 403 });
