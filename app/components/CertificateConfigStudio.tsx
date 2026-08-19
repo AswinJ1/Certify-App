@@ -124,6 +124,15 @@ export default function CertificateConfigStudio({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const handleCopyLink = () => {
+    if (!cert?.publicSlug) return;
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/c/${cert.publicSlug}` : `/c/${cert.publicSlug}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    showToast('Public certificate link copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const loadCert = useCallback(() => {
     fetch(`/api/certificates/${certificateId}`)
       .then((r) => r.json())
@@ -616,10 +625,10 @@ export default function CertificateConfigStudio({
                 </div>
               </div>
               <button
-                onClick={() => setActiveStep('fields')}
+                onClick={() => setActiveStep('dataset')}
                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
               >
-                <span>Proceed to Fields Editor</span>
+                <span>Proceed to Recipients Upload</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -644,13 +653,13 @@ export default function CertificateConfigStudio({
                 Drag, resize, and position dynamic fields (Name, Event, Date, ID) directly on the template canvas
               </p>
             </div>
-            <button
-              onClick={() => setActiveStep('dataset')}
-              className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1"
-            >
-              <span>Next: Upload Dataset</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+           <button
+                onClick={() => setActiveStep('mapping')}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+              >
+                <span>Proceed to Field Mappings</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
           </div>
 
           <FieldEditor
@@ -673,6 +682,13 @@ export default function CertificateConfigStudio({
             <p className=" mt-0.5">
               Upload recipient data spreadsheet (CSV or XLSX). Each row represents a certificate recipient.
             </p>
+               <button
+                onClick={() => setActiveStep('fields')}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+              >
+                <span>Proceed to Fields Editor</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
           </div>
 
           {cert.datasets.length > 0 && (
@@ -715,6 +731,13 @@ export default function CertificateConfigStudio({
             <p className="mt-0.5">
               Connect spreadsheet columns to the dynamic text fields configured on the certificate
             </p>
+               <button
+                onClick={() => setActiveStep('form')}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+              >
+                <span>Proceed to Form Fields</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
           </div>
 
           {cert.fields.length === 0 || allColumns.length === 0 ? (
@@ -799,6 +822,13 @@ export default function CertificateConfigStudio({
             >
               <span>+ Add Lookup Field</span>
             </button>
+               <button
+                onClick={() => setActiveStep('publish')}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+              >
+                <span>Proceed to Publish</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
           </div>
 
           {allColumns.length === 0 ? (
@@ -930,24 +960,37 @@ export default function CertificateConfigStudio({
           <div className="pt-4 border-t border-[#ebebed]">
             {cert.status === 'PUBLISHED' ? (
               <div className="space-y-4">
-                <div className="p-4  border">
-                  <div className=" flex items-center gap-2">
+                <div className="p-4  border ">
+                  <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Certificate is Live & Searchable!</span>
                   </div>
                   <p className="text-xs text-[#2f2b3d] mt-1">
                     Participants can visit the public lookup page and generate their certificates directly.
                   </p>
-                  <div className="mt-3 flex items-center gap-2">
+                  
+                  {/* Public Link Box with Visit and Copy buttons */}
+                  <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div className="flex-1 bg-white border border-[#dbdade] px-3 py-1.5 text-xs font-mono text-[#2f2b3d] truncate select-all">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/c/${cert.publicSlug}` : `/c/${cert.publicSlug}`}
+                    </div>
                     <a
                       href={`/c/${cert.publicSlug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+                      className="btn-primary text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 no-underline whitespace-nowrap"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Visit Public Page</span>
                     </a>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="btn-secondary text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-[#28c76f]" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? 'Copied!' : 'Copy URL'}</span>
+                    </button>
                   </div>
                 </div>
 

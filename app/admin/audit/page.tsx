@@ -14,6 +14,14 @@ import {
   Image as ImageIcon,
   FileText,
 } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 
 interface AuditLogEntry {
   id: string;
@@ -162,63 +170,63 @@ export default function AuditLogsPage() {
       ) : (
         <div className="materio-card bg-white border border-[#dbdade] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Actor / User</th>
-                  <th>Action</th>
-                  <th>Entity Type</th>
-                  <th>Context Context</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full text-left text-xs">
+              <TableHeader>
+                <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Timestamp</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Actor / User</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Action</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Entity Type</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Context</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td>
-                      <div className="text-xs text-[#2f2b3d] font-bold">
+                  <TableRow key={log.id} className="border-b border-[#ebebed] hover:bg-[#f8f7fa]">
+                    <TableCell className="py-3 px-4">
+                      <div className="text-xs text-black font-medium">
                         {new Date(log.createdAt).toLocaleDateString()}
                       </div>
                       <div className="text-[10px] text-[#6f6b7d] font-mono">
                         {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
-                    </td>
+                    </TableCell>
 
-                    <td>
+                    <TableCell className="py-3 px-4">
                       {log.user ? (
                         <div>
-                          <div className="text-xs font-bold text-[#2f2b3d]">{log.user.name}</div>
+                          <div className="text-xs font-semibold text-black">{log.user.name}</div>
                           <div className="text-[10px] text-[#6f6b7d]">{log.user.email}</div>
                         </div>
                       ) : (
                         <span className="text-xs text-[#6f6b7d]">System</span>
                       )}
-                    </td>
+                    </TableCell>
 
-                    <td>{getActionBadge(log.action)}</td>
+                    <TableCell className="py-3 px-4">{getActionBadge(log.action)}</TableCell>
 
-                    <td>
+                    <TableCell className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <div className="p-1 bg-[#f8f7fa] border border-[#dbdade]">{getEntityIcon(log.entityType)}</div>
                         <div>
-                          <div className="text-xs font-bold text-[#2f2b3d]">{log.entityType}</div>
+                          <div className="text-xs font-semibold text-black">{log.entityType}</div>
                           {log.entityId && (
                             <div className="text-[10px] text-[#6f6b7d] font-mono">{log.entityId.slice(0, 8)}…</div>
                           )}
                         </div>
                       </div>
-                    </td>
+                    </TableCell>
 
-                    <td>
+                    <TableCell className="py-3 px-4">
                       <div className="text-xs text-[#6f6b7d]">
-                        {log.organization && <span>Org: <strong className="text-[#2f2b3d]">{log.organization.name}</strong></span>}
-                        {log.event && <span> · Event: <strong className="text-[#2f2b3d]">{log.event.name}</strong></span>}
+                        {log.organization && <span>Org: <strong className="text-black">{log.organization.name}</strong></span>}
+                        {log.event && <span> · Event: <strong className="text-black">{log.event.name}</strong></span>}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination */}

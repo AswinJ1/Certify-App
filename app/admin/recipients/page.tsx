@@ -1,7 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Users, Search, ChevronLeft, ChevronRight, Download, CheckCircle2, Award, ChevronDown, ChevronUp, Building2, Calendar } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 
 interface RecipientEntry {
   id: string;
@@ -123,69 +131,64 @@ export default function RecipientsPage() {
       ) : (
         <div className="materio-card bg-white border border-[#dbdade] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Recipient Name</th>
-                  <th>Certificate</th>
-                  <th>Event / Org</th>
-                  <th>Downloads</th>
-                  <th>Status</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full text-left text-xs">
+              <TableHeader>
+                <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Recipient Name</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Certificate</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Event / Org</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Downloads</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Status</TableHead>
+                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {recipients.map((r) => (
-                  <>
-                    <tr
-                      key={r.id}
+                  <Fragment key={r.id}>
+                    <TableRow
                       onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                      className="cursor-pointer hover:bg-[#f8f7fa]"
+                      className="cursor-pointer hover:bg-[#f8f7fa] border-b border-[#ebebed]"
                     >
-                      <td>
+                      <TableCell className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center flex-shrink-0">
-                            <Users className="w-4 h-4" />
+                          <div className="w-8 h-8 bg-[#7367f0]/10 text-[#7367f0] flex items-center justify-center flex-shrink-0 font-bold text-xs">
+                            {r.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-[#2f2b3d]">{r.displayName}</div>
+                            <div className="text-xs font-semibold text-black">{r.displayName}</div>
                             <div className="text-[10px] text-[#6f6b7d]">
                               {Object.keys(r.data).length} data field(s)
                             </div>
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
-                        <div className="flex items-center gap-1.5 text-xs text-[#2f2b3d] font-medium">
-                          <Award className="w-3.5 h-3.5 text-[#00bad1]" />
+                      <TableCell className="py-3 px-4">
+                        <div className="text-xs text-black font-medium">
                           <span>{r.certificateName}</span>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
+                      <TableCell className="py-3 px-4">
                         <div className="text-xs text-[#6f6b7d]">
-                          <div className="font-medium text-[#2f2b3d]">{r.eventName}</div>
-                          <div className="text-[10px]">{r.orgName}</div>
+                          <div className="font-medium text-black">{r.eventName}</div>
+                          <div className="text-[10px] text-[#6f6b7d]">{r.orgName}</div>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#2f2b3d]">
-                          <Download className="w-3.5 h-3.5 text-[#7367f0]" />
+                      <TableCell className="py-3 px-4">
+                        <div className="text-xs font-semibold text-black font-mono">
                           <span>{r.downloads}</span>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
-                        {r.hasGenerated ? (
-                          <span className="badge badge-published">Downloaded</span>
-                        ) : (
-                          <span className="badge badge-draft">Ready</span>
-                        )}
-                      </td>
+                      <TableCell className="py-3 px-4">
+                        <span className="text-[11px] font-semibold border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa]">
+                          {r.hasGenerated ? 'DOWNLOADED' : 'READY'}
+                        </span>
+                      </TableCell>
 
-                      <td>
+                      <TableCell className="py-3 px-4">
                         <div className="text-[#a5a2ad] flex items-center">
                           {expandedId === r.id ? (
                             <ChevronUp className="w-4 h-4 text-[#7367f0]" />
@@ -193,35 +196,35 @@ export default function RecipientsPage() {
                             <ChevronDown className="w-4 h-4" />
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
 
                     {/* Expanded Key-Value Preview */}
                     {expandedId === r.id && (
-                      <tr key={`${r.id}-expanded`}>
-                        <td colSpan={6} className="bg-[#f8f7fa] p-4 border-b border-[#dbdade]">
-                          <div className="text-[11px] font-bold text-[#6f6b7d] uppercase tracking-wider mb-2">
+                      <TableRow key={`${r.id}-expanded`} className="bg-[#f8f7fa] border-b border-[#dbdade]">
+                        <TableCell colSpan={6} className="p-4">
+                          <div className="text-[11px] font-semibold text-black uppercase tracking-wider mb-2">
                             Imported Recipient Fields
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                             {Object.entries(r.data).map(([key, val]) => (
                               <div key={key} className="p-2.5 bg-white border border-[#dbdade]">
-                                <div className="text-[10px] font-bold text-[#7367f0] uppercase truncate">
+                                <div className="text-[10px] font-semibold text-[#7367f0] uppercase truncate">
                                   {key}
                                 </div>
-                                <div className="text-xs font-medium text-[#2f2b3d] mt-0.5 truncate">
+                                <div className="text-xs font-medium text-black mt-0.5 truncate">
                                   {val || '—'}
                                 </div>
                               </div>
                             ))}
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination */}

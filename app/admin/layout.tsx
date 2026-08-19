@@ -155,16 +155,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <SidebarMenuButton
                       render={
                         <Link href={item.href} className="flex items-center gap-2.5">
-                          <Icon className={`size-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#7367f0]'}`} />
+                          <Icon className={`size-4 flex-shrink-0 ${isActive ? '' : ''}`} />
                           <span>{item.label}</span>
                         </Link>
                       }
                       isActive={isActive}
                       tooltip={item.label}
-                      className={`text-xs py-2 px-2.5 transition-all ${
+                      className={` py-2 px-2.5 transition-all ${
                         isActive
-                          ? 'bg-[#7367f0] text-white hover:bg-[#685dd8] hover:text-white font-medium shadow-xs'
-                          : 'text-[#5d596c] hover:bg-[#f4f5fa] hover:text-black'
+                          ? ' shadow-xs'
+                          : ''
                       }`}
                     />
                   </SidebarMenuItem>
@@ -173,26 +173,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarMenu>
           </SidebarGroup>
 
-          {/* Switch to Organizer View */}
-          <SidebarGroup className="pt-2 border-t border-[#ebebed]">
-            <SidebarGroupLabel className="text-[10px] text-[#a5a2ad] uppercase tracking-wider px-2">
-              Workspace Switch
-            </SidebarGroupLabel>
-            <SidebarMenu className="mt-1">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={
-                    <Link href="/organizer" className="flex items-center gap-2.5">
-                      <Building2 className="size-4 flex-shrink-0 text-[#00bad1]" />
-                      <span>Switch to Organizer View</span>
-                    </Link>
-                  }
-                  tooltip="Organizer Workspace"
-                  className="text-xs text-[#00bad1] hover:bg-[#00bad1]/10 hover:text-[#00bad1] py-2 px-2.5"
-                />
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
         </SidebarContent>
 
         {/* ── Sidebar Footer: Admin Profile ── */}
@@ -206,9 +186,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       size="lg"
                       className="data-[state=open]:bg-[#f8f7fa] hover:bg-[#f8f7fa] transition-colors"
                     >
-                      <div className="size-8 rounded-full bg-[#7367f0] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
+                      <img
+                        src="/Avatar/8.png"
+                        alt={user.name}
+                        className="size-8 border border-[#dbdade] object-cover bg-[#f8f7fa] flex-shrink-0"
+                      />
                       <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
                         <span className="truncate font-semibold text-black">
                           {user.name}
@@ -229,9 +211,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 >
                   <DropdownMenuLabel className="p-2 text-xs font-normal">
                     <div className="flex items-center gap-2">
-                      <div className="size-7 rounded-full bg-[#7367f0] text-white flex items-center justify-center font-bold text-[11px] flex-shrink-0">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
+                      <img
+                        src="/Avatar/8.png"
+                        alt={user.name}
+                        className="size-7 border border-[#dbdade] object-cover bg-[#f8f7fa] flex-shrink-0"
+                      />
                       <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
                         <span className="truncate font-semibold text-black">{user.name}</span>
                         <span className="truncate text-[10px] text-[#6f6b7d]">Platform Super Admin</span>

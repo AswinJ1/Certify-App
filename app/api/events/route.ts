@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const events = await prisma.event.findMany({
       where,
       include: {
-        organization: { select: { id: true, name: true } },
+        organization: { select: { id: true, name: true, logo: true } },
         _count: { select: { certificates: true } },
       },
       orderBy: { createdAt: 'desc' },
