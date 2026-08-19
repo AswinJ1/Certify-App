@@ -26,7 +26,7 @@ interface EventItem {
   status: string;
   publicSlug: string;
   createdAt: string;
-  _count: { certificates: number };
+  _count?: { certificates: number };
 }
 
 interface CertificateItem {
@@ -34,8 +34,8 @@ interface CertificateItem {
   name: string;
   status: string;
   publicSlug: string;
-  event: { name: string };
-  _count: { recipients: number };
+  event?: { name: string } | null;
+  _count?: { recipients: number };
 }
 
 export default function OrganizerDashboard() {
@@ -48,12 +48,13 @@ export default function OrganizerDashboard() {
     fetch('/api/organizer/stats')
       .then((r) => r.json())
       .then((data) => {
-        if (data.stats) {
+        if (data?.stats) {
           setStats(data.stats);
           setRecentEvents(data.recentEvents || []);
           setRecentCertificates(data.recentCertificates || []);
         }
       })
+      .catch((err) => console.error('Failed to load organizer stats:', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,8 +63,8 @@ export default function OrganizerDashboard() {
       {/* ── Top Overview Banner ── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl text-black">Organizer Dashboard</h1>
-          <p className="text-xs text-black mt-0.5">
+          <h1 className="text-xl font-bold text-black tracking-tight">Organizer Dashboard</h1>
+          <p className="text-xs text-[#6f6b7d] mt-0.5">
             Certificate Studio, Event Operations & Recipient Management
           </p>
         </div>
@@ -90,13 +91,13 @@ export default function OrganizerDashboard() {
             <div className="lg:col-span-4 materio-card p-6 bg-white border border-[#dbdade] flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-black">Total Downloads</span>
+                  <span className="text-xs text-[#6f6b7d] font-semibold uppercase tracking-wider">Total Downloads</span>
                 </div>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <div className="text-3xl text-black">{stats.downloads}</div>
-                  <span className="text-xs text-black">generated</span>
+                  <div className="text-3xl font-bold text-black font-mono">{stats.downloads}</div>
+                  <span className="text-xs text-[#6f6b7d]">generated</span>
                 </div>
-                <p className="text-xs text-black mt-1">
+                <p className="text-xs text-[#6f6b7d] mt-1">
                   Certificates generated on-demand by recipients.
                 </p>
               </div>
@@ -116,13 +117,13 @@ export default function OrganizerDashboard() {
             <div className="lg:col-span-4 materio-card p-6 bg-white border border-[#dbdade] flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-black">Recipients in Database</span>
+                  <span className="text-xs text-[#6f6b7d] font-semibold uppercase tracking-wider">Recipients in Database</span>
                 </div>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <div className="text-3xl text-black">{stats.recipients}</div>
-                  <span className="text-xs text-black">participants</span>
+                  <div className="text-3xl font-bold text-black font-mono">{stats.recipients}</div>
+                  <span className="text-xs text-[#6f6b7d]">participants</span>
                 </div>
-                <p className="text-xs text-black mt-1">
+                <p className="text-xs text-[#6f6b7d] mt-1">
                   Imported across all CSV/XLSX recipient datasets.
                 </p>
               </div>
@@ -138,43 +139,43 @@ export default function OrganizerDashboard() {
               </div>
             </div>
 
-            {/* Card 3: Quick Summary without colored container boxes over icons */}
+            {/* Card 3: Quick Summary */}
             <div className="lg:col-span-4 materio-card p-6 bg-white border border-[#dbdade] space-y-4">
               <div className="flex items-center justify-between border-b border-[#ebebed] pb-2">
-                <div className="text-xs text-black">Overview</div>
-                <span className="text-[11px] text-black">Platform Stats</span>
+                <div className="text-xs font-semibold text-black uppercase tracking-wider">Overview</div>
+                <span className="text-[11px] text-[#6f6b7d]">Platform Stats</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-[#f8f7fa] border border-[#dbdade] flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-[#a5a2ad] flex-shrink-0" />
                   <div>
-                    <div className="text-base text-black">{stats.events}</div>
-                    <div className="text-[11px] text-black">Events</div>
+                    <div className="text-base font-bold text-black font-mono">{stats.events}</div>
+                    <div className="text-[11px] text-[#6f6b7d]">Events</div>
                   </div>
                 </div>
 
                 <div className="p-3 bg-[#f8f7fa] border border-[#dbdade] flex items-center gap-3">
                   <Award className="w-5 h-5 text-[#a5a2ad] flex-shrink-0" />
                   <div>
-                    <div className="text-base text-black">{stats.certificates}</div>
-                    <div className="text-[11px] text-black">Certificates</div>
+                    <div className="text-base font-bold text-black font-mono">{stats.certificates}</div>
+                    <div className="text-[11px] text-[#6f6b7d]">Certificates</div>
                   </div>
                 </div>
 
                 <div className="p-3 bg-[#f8f7fa] border border-[#dbdade] flex items-center gap-3">
                   <Users className="w-5 h-5 text-[#a5a2ad] flex-shrink-0" />
                   <div>
-                    <div className="text-base text-black">{stats.recipients}</div>
-                    <div className="text-[11px] text-black">Recipients</div>
+                    <div className="text-base font-bold text-black font-mono">{stats.recipients}</div>
+                    <div className="text-[11px] text-[#6f6b7d]">Recipients</div>
                   </div>
                 </div>
 
                 <div className="p-3 bg-[#f8f7fa] border border-[#dbdade] flex items-center gap-3">
                   <Download className="w-5 h-5 text-[#a5a2ad] flex-shrink-0" />
                   <div>
-                    <div className="text-base text-black">{stats.downloads}</div>
-                    <div className="text-[11px] text-black">Downloads</div>
+                    <div className="text-base font-bold text-black font-mono">{stats.downloads}</div>
+                    <div className="text-[11px] text-[#6f6b7d]">Downloads</div>
                   </div>
                 </div>
               </div>
@@ -188,7 +189,7 @@ export default function OrganizerDashboard() {
               <div className="p-4 border-b border-[#ebebed] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-[#a5a2ad]" />
-                  <h2 className="text-sm text-black">Recent Events</h2>
+                  <h2 className="text-sm font-semibold text-black">Recent Events</h2>
                 </div>
                 <Link href="/organizer/events" className="text-xs text-[#7367f0] hover:underline flex items-center gap-1">
                   <span>View All</span>
@@ -198,7 +199,7 @@ export default function OrganizerDashboard() {
 
               <div className="divide-y divide-[#ebebed]">
                 {recentEvents.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-black">No events created yet.</div>
+                  <div className="p-8 text-center text-xs text-[#6f6b7d]">No events created yet.</div>
                 ) : (
                   recentEvents.map((evt) => (
                     <Link
@@ -207,12 +208,14 @@ export default function OrganizerDashboard() {
                       className="p-4 flex items-center justify-between hover:bg-[#f8f7fa] transition-colors no-underline text-inherit block"
                     >
                       <div>
-                        <div className="text-xs text-black">{evt.name}</div>
+                        <div className="text-xs font-semibold text-black">{evt.name}</div>
                         <div className="text-[11px] text-[#6f6b7d] mt-0.5">
-                          {evt._count.certificates} certificates configured
+                          {evt._count?.certificates || 0} certificates configured
                         </div>
                       </div>
-                      <span className="text-xs text-black">{evt.status}</span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 border border-[#dbdade] bg-[#f8f7fa] text-black">
+                        {evt.status}
+                      </span>
                     </Link>
                   ))
                 )}
@@ -224,7 +227,7 @@ export default function OrganizerDashboard() {
               <div className="p-4 border-b border-[#ebebed] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-[#a5a2ad]" />
-                  <h2 className="text-sm text-black">Configured Certificates</h2>
+                  <h2 className="text-sm font-semibold text-black">Configured Certificates</h2>
                 </div>
                 <Link href="/organizer/certificates" className="text-xs text-[#7367f0] hover:underline flex items-center gap-1">
                   <span>View All</span>
@@ -234,7 +237,7 @@ export default function OrganizerDashboard() {
 
               <div className="divide-y divide-[#ebebed]">
                 {recentCertificates.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-black">No certificates configured yet.</div>
+                  <div className="p-8 text-center text-xs text-[#6f6b7d]">No certificates configured yet.</div>
                 ) : (
                   recentCertificates.map((cert) => (
                     <Link
@@ -243,12 +246,14 @@ export default function OrganizerDashboard() {
                       className="p-4 flex items-center justify-between hover:bg-[#f8f7fa] transition-colors no-underline text-inherit block"
                     >
                       <div>
-                        <div className="text-xs text-black">{cert.name}</div>
+                        <div className="text-xs font-semibold text-black">{cert.name}</div>
                         <div className="text-[11px] text-[#6f6b7d] mt-0.5">
-                          Event: {cert.event.name} · {cert._count.recipients} recipients
+                          Event: {cert.event?.name || 'General Event'} · {cert._count?.recipients || 0} recipients
                         </div>
                       </div>
-                      <span className="text-xs text-black">{cert.status}</span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 border border-[#dbdade] bg-[#f8f7fa] text-black">
+                        {cert.status}
+                      </span>
                     </Link>
                   ))
                 )}

@@ -7,16 +7,21 @@ import { v4 as uuidv4 } from 'uuid';
 export async function GET() {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    const orgIds = user.organizationMembers?.map((m) => m.organizationId) || [];
 
-    if (!orgId && user.role !== 'SUPER_ADMIN') {
+    if (orgIds.length === 0 && user.role === 'SUPER_ADMIN') {
+      const allOrgs = await prisma.organization.findMany({ select: { id: true } });
+      allOrgs.forEach((o) => orgIds.push(o.id));
+    }
+
+    if (orgIds.length === 0 && user.role !== 'SUPER_ADMIN') {
       return NextResponse.json({ events: [] });
     }
 
     const events = await prisma.event.findMany({
-      where: orgId ? { organizationId: orgId } : {},
+      where: orgIds.length > 0 ? { organizationId: { in: orgIds } } : {},
       include: {
-        organization: { select: { id: true, name: true } },
+        organization: { select: { id: true, name: true, logo: true } },
         _count: { select: { certificates: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -33,9 +38,14 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId: string | undefined = user.organizationMembers?.[0]?.organizationId;
 
-    if (!orgId && user.role !== 'SUPER_ADMIN') {
+    if (!orgId && user.role === 'SUPER_ADMIN') {
+      const firstOrg = await prisma.organization.findFirst();
+      if (firstOrg) orgId = firstOrg.id;
+    }
+
+    if (!orgId) {
       return NextResponse.json({ error: 'No organization linked to account' }, { status: 400 });
     }
 
@@ -49,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     const event = await prisma.event.create({
       data: {
-        organizationId: orgId!,
+        organizationId: orgId,
         name,
         description,
         startDate: startDate ? new Date(startDate) : null,

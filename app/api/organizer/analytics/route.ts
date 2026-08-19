@@ -6,9 +6,15 @@ import { requireAuth } from '@/lib/auth';
 export async function GET() {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    const orgIds = user.organizationMembers?.map((m) => m.organizationId) || [];
 
-    if (!orgId && user.role !== 'SUPER_ADMIN') {
+    // Fallback for Super Admin if not explicitly attached to an organization member row
+    if (orgIds.length === 0 && user.role === 'SUPER_ADMIN') {
+      const allOrgs = await prisma.organization.findMany({ select: { id: true } });
+      allOrgs.forEach((o) => orgIds.push(o.id));
+    }
+
+    if (orgIds.length === 0 && user.role !== 'SUPER_ADMIN') {
       return NextResponse.json({
         summary: {
           totalEvents: 0,
@@ -23,10 +29,10 @@ export async function GET() {
       });
     }
 
-    const eventWhere = orgId ? { organizationId: orgId } : {};
-    const certWhere = orgId ? { event: { organizationId: orgId } } : {};
-    const dlWhere = orgId
-      ? { generatedCertificate: { certificate: { event: { organizationId: orgId } } } }
+    const eventWhere = orgIds.length > 0 ? { organizationId: { in: orgIds } } : {};
+    const certWhere = orgIds.length > 0 ? { event: { organizationId: { in: orgIds } } } : {};
+    const dlWhere = orgIds.length > 0
+      ? { generatedCertificate: { certificate: { event: { organizationId: { in: orgIds } } } } }
       : {};
 
     const [
@@ -40,7 +46,7 @@ export async function GET() {
       prisma.certificate.count({ where: certWhere }),
       prisma.certificate.count({ where: { ...certWhere, status: 'PUBLISHED' } }),
       prisma.recipient.count({
-        where: orgId ? { certificate: { event: { organizationId: orgId } } } : {},
+        where: orgIds.length > 0 ? { certificate: { event: { organizationId: { in: orgIds } } } } : {},
       }),
       prisma.downloadLog.count({ where: dlWhere }),
     ]);
@@ -99,8 +105,8 @@ export async function GET() {
         id: cert.id,
         name: cert.name,
         status: cert.status,
-        eventName: cert.event.name,
-        orgName: cert.event.organization.name,
+        eventName: cert.event?.name || 'General Event',
+        orgName: cert.event?.organization?.name || 'Organization',
         recipients: cert._count.recipients,
         downloads,
       };
@@ -122,16 +128,16 @@ export async function GET() {
     });
 
     const recentActivity = recentDownloadLogs.map((log) => {
-      const recipientData = log.generatedCertificate.recipient.data as Record<string, string>;
+      const recipientData = (log.generatedCertificate?.recipient?.data as Record<string, string>) || {};
       const recipientName = recipientData['Name'] || recipientData['name'] ||
         recipientData['Student Name'] || recipientData['student_name'] ||
         Object.values(recipientData)[0] || 'Unknown';
 
       return {
         id: log.id,
-        certName: log.generatedCertificate.certificate.name,
+        certName: log.generatedCertificate?.certificate?.name || 'Certificate',
         recipientName,
-        downloadedAt: log.downloadedAt,
+        downloadedAt: log.downloadedAt.toISOString(),
         ipAddress: log.ipAddress,
       };
     });
@@ -149,6 +155,7 @@ export async function GET() {
       recentActivity,
     });
   } catch (error) {
+    console.error('Organizer analytics error:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -7,19 +7,24 @@ import { v4 as uuidv4 } from 'uuid';
 export async function GET() {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    const orgIds = user.organizationMembers?.map((m) => m.organizationId) || [];
 
-    if (!orgId && user.role !== 'SUPER_ADMIN') {
+    if (orgIds.length === 0 && user.role === 'SUPER_ADMIN') {
+      const allOrgs = await prisma.organization.findMany({ select: { id: true } });
+      allOrgs.forEach((o) => orgIds.push(o.id));
+    }
+
+    if (orgIds.length === 0 && user.role !== 'SUPER_ADMIN') {
       return NextResponse.json({ certificates: [] });
     }
 
     const certificates = await prisma.certificate.findMany({
-      where: orgId ? { event: { organizationId: orgId } } : {},
+      where: orgIds.length > 0 ? { event: { organizationId: { in: orgIds } } } : {},
       include: {
         template: true,
         event: {
           include: {
-            organization: { select: { id: true, name: true } },
+            organization: { select: { id: true, name: true, logo: true } },
           },
         },
         _count: {
@@ -43,7 +48,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
-    const orgId = user.organizationMembers?.[0]?.organizationId;
+    let orgId: string | undefined = user.organizationMembers?.[0]?.organizationId;
+
+    if (!orgId && user.role === 'SUPER_ADMIN') {
+      const firstOrg = await prisma.organization.findFirst();
+      if (firstOrg) orgId = firstOrg.id;
+    }
 
     const { name, eventId } = await request.json();
 
@@ -51,10 +61,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name and eventId are required' }, { status: 400 });
     }
 
-    // Verify the event belongs to this organization
+    // Verify the event exists and belongs to this organization
     if (user.role !== 'SUPER_ADMIN') {
+      if (!orgId) {
+        return NextResponse.json({ error: 'No organization linked' }, { status: 400 });
+      }
       const event = await prisma.event.findFirst({
-        where: { id: eventId, organizationId: orgId! },
+        where: { id: eventId, organizationId: orgId },
       });
       if (!event) {
         return NextResponse.json({ error: 'Event not found or unauthorized' }, { status: 403 });
