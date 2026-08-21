@@ -26,6 +26,7 @@ export async function GET() {
         dailyDownloads: [],
         topCertificates: [],
         recentActivity: [],
+        eventCertificateDistribution: [],
       });
     }
 
@@ -112,6 +113,24 @@ export async function GET() {
       };
     }).sort((a, b) => b.downloads - a.downloads);
 
+    const eventCertificateDistribution = await prisma.event.findMany({
+      where: eventWhere,
+      select: {
+        name: true,
+        _count: {
+          select: {
+            certificates: true,
+          },
+        },
+      },
+      orderBy: {
+        certificates: {
+          _count: 'desc',
+        },
+      },
+      take: 10,
+    });
+
     // Recent downloads
     const recentDownloadLogs = await prisma.downloadLog.findMany({
       where: dlWhere,
@@ -153,6 +172,12 @@ export async function GET() {
       dailyDownloads,
       topCertificates: topCertsWithDownloads,
       recentActivity,
+      eventCertificateDistribution: eventCertificateDistribution
+        .filter((event) => event._count.certificates > 0)
+        .map((event) => ({
+          eventName: event.name || 'Untitled Event',
+          certificateCount: event._count.certificates,
+        })),
     });
   } catch (error) {
     console.error('Organizer analytics error:', error);

@@ -169,7 +169,7 @@ export default function OrganizerRecipientsPage() {
           >
             <option value="">All Certificates</option>
             {certificates.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.id} value={c.id}  className="bg-[#F8F9FA]">
                 {c.name}
               </option>
             ))}
@@ -179,7 +179,7 @@ export default function OrganizerRecipientsPage() {
         {/* Search Input Box */}
         <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2 w-full">
           <input
-            className="form-input text-xs px-3 py-2 flex-1 text-black bg-white border border-[#dbdade] placeholder:text-[#888888]"
+            className="form-input  px-3 py-2 flex-1 text-black bg-white border border-[#dbdade] placeholder:text-[#888888]"
             placeholder="Search by participant name, email, roll number, or team..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -201,7 +201,7 @@ export default function OrganizerRecipientsPage() {
       </div>
 
       {/* ── Main Data Table ── */}
-      <div className="materio-card bg-white border border-[#dbdade] overflow-hidden">
+      <div className="  border  overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="spinner" style={{ width: '32px', height: '32px' }} />
@@ -219,14 +219,14 @@ export default function OrganizerRecipientsPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table className="w-full text-left text-xs">
-              <TableHeader>
-                <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">PARTICIPANT DETAILS</TableHead>
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">CERTIFICATE & EVENT</TableHead>
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">DOWNLOADS</TableHead>
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">STATUS</TableHead>
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">DATA FIELDS</TableHead>
-                  <TableHead className="py-3 px-4 text-black font-semibold uppercase text-xs">ACTIONS</TableHead>
+              <TableHeader className='bg-white'>
+                <TableRow className=" border ">
+                  <TableHead className="py-3 px-4 text-black  uppercase ">PARTICIPANT DETAILS</TableHead>
+                  <TableHead className="py-3 px-4 text-black  uppercase text-xs">CERTIFICATE & EVENT</TableHead>
+                  <TableHead className="py-3 px-4 text-black uppercase text-xs">DOWNLOADS</TableHead>
+                  <TableHead className="py-3 px-4 text-black  uppercase text-xs">STATUS</TableHead>
+                  <TableHead className="py-3 px-4 text-black  uppercase text-xs">DATA FIELDS</TableHead>
+                  <TableHead className="py-3 px-4 text-black  uppercase text-xs">ACTIONS</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,11 +249,11 @@ export default function OrganizerRecipientsPage() {
                         {/* Name & Contact */}
                         <TableCell className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-[#7367f0]/10 text-[#7367f0] text-xs flex items-center justify-center flex-shrink-0">
+                            {/* <div className="w-8 h-8 bg-[#7367f0]/10 text-[#7367f0] text-xs flex items-center justify-center flex-shrink-0">
                               {initials}
-                            </div>
+                            </div> */}
                             <div>
-                              <div className="text-xs text-black font-semibold">{r.displayName}</div>
+                              <div className=" text-black ">{r.displayName}</div>
                               {r.email ? (
                                 <div className="text-[11px] text-[#6f6b7d] flex items-center gap-1">
                                   <span>{r.email}</span>
@@ -268,7 +268,7 @@ export default function OrganizerRecipientsPage() {
                         {/* Certificate & Event */}
                         <TableCell className="py-3 px-4">
                           <div className="space-y-0.5">
-                            <div className="text-xs text-black font-medium">
+                            <div className=" text-black ">
                               <span>{r.certificateName}</span>
                             </div>
                             <div className="text-[11px] text-[#6f6b7d]">
@@ -279,15 +279,15 @@ export default function OrganizerRecipientsPage() {
 
                         {/* Downloads */}
                         <TableCell className="py-3 px-4">
-                          <div className="flex items-center gap-1.5 text-xs text-black font-mono">
-                            <Download className="w-3.5 h-3.5 text-[#a5a2ad]" />
+                          <div className="flex items-center gap-1.5  text-black font-mono">
+                            <Download className=" text-[#a5a2ad]" />
                             <span>{r.downloads}</span>
                           </div>
                         </TableCell>
 
                         {/* Status */}
                         <TableCell className="py-3 px-4">
-                          <span className="text-[11px] font-semibold border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa]">
+                          <span className="text-[11px] ] px-2 py-0.5 bg-[#f8f7fa]">
                             {r.hasGenerated ? 'CLAIMED' : 'AVAILABLE'}
                           </span>
                         </TableCell>
@@ -296,7 +296,7 @@ export default function OrganizerRecipientsPage() {
                         <TableCell className="py-3 px-4">
                           <button
                             type="button"
-                            className="text-xs text-[#7367f0] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+                            className=" hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedId(expandedId === r.id ? null : r.id);
@@ -321,7 +321,7 @@ export default function OrganizerRecipientsPage() {
                               className="p-1 text-[#6f6b7d] hover:text-[#7367f0] transition-colors"
                               title="Open Public Certificate Lookup"
                             >
-                              <ExternalLink className="w-3.5 h-3.5" />
+                              <ExternalLink className="" />
                             </a>
                           </div>
                         </TableCell>
@@ -332,16 +332,16 @@ export default function OrganizerRecipientsPage() {
                         <TableRow className="bg-[#f8f7fa] border-b border-[#dbdade]">
                           <TableCell colSpan={6} className="p-4">
                             <div className="text-[11px] text-black mb-2 flex items-center justify-between">
-                              <span className="font-semibold">Imported Spreadsheet Values for this Recipient:</span>
+                              <span className="">Imported Spreadsheet Values for this Recipient:</span>
                               <span className="text-[10px] text-[#a5a2ad]">Record ID: {r.id}</span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                               {Object.entries(r.data).map(([key, val]) => (
-                                <div key={key} className="p-2.5 bg-white border border-[#dbdade]">
-                                  <div className="text-[10px] text-[#7367f0] font-mono truncate">
+                                <div key={key} className="p-2.5">
+                                  <div className=" font-mono truncate">
                                     {key}
                                   </div>
-                                  <div className="text-xs text-black mt-0.5 truncate font-medium">
+                                  <div className=" text-black mt-0.5 truncate ">
                                     {val || '—'}
                                   </div>
                                 </div>
@@ -360,13 +360,13 @@ export default function OrganizerRecipientsPage() {
 
         {/* Pagination Footer */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between p-3 border-t border-[#dbdade] bg-white">
+          <div className="flex items-center justify-between p-3 border-t ">
             <div className="text-xs text-black">
               Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total recipients)
             </div>
             <div className="flex items-center gap-1">
               <button
-                className="btn-secondary text-xs p-1.5"
+                className=" p-1.5"
                 disabled={pagination.page <= 1}
                 onClick={() => loadRecipients(pagination.page - 1)}
                 title="Previous Page"
@@ -377,7 +377,7 @@ export default function OrganizerRecipientsPage() {
                 {pagination.page} / {pagination.totalPages}
               </span>
               <button
-                className="btn-secondary text-xs p-1.5"
+                className=" p-1.5"
                 disabled={pagination.page >= pagination.totalPages}
                 onClick={() => loadRecipients(pagination.page + 1)}
                 title="Next Page"

@@ -468,7 +468,7 @@ export default function CertificateConfigStudio({
       </div>
 
       {/* Step Navigation Bar */}
-      <div className="materio-card bg-white border border-[#dbdade] p-1.5 flex gap-1 overflow-x-auto">
+      <div className="  p-1.5 flex gap-1 overflow-x-auto">
         {steps.map((step, idx) => {
           const Icon = step.icon;
           const isActive = activeStep === step.key;
@@ -479,7 +479,7 @@ export default function CertificateConfigStudio({
               className={`flex items-center gap-2 px-3.5 py-2  whitespace-nowrap transition-colors border ${
                 isActive
                   ? 'bg-[#7367f0] text-white border-[#7367f0]'
-                  : 'bg-white text-[#6f6b7d] hover:text-[#2f2b3d] hover:bg-[#f8f7fa] border-transparent'
+                  : ' text-[#6f6b7d] hover:text-[#2f2b3d] hover:bg-[#f8f7fa] border-transparent'
               }`}
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#7367f0]'}`} />

@@ -159,11 +159,11 @@ export default function OrganizerEventDetailPage() {
             )}
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className=" text-black">{event.status}</span>
-                <span className=" text-[#6f6b7d]">·</span>
-                <span className=" text-[#6f6b7d]">{event.organization.name}</span>
+                {/* <span className=" text-black">{event.status}</span> */}
+                <span className="  text-xl capitalize">{event.name} | </span>
+                <span className="  text-xl">{event.organization.name}</span>
               </div>
-              <h1 className="text-xl text-black">{event.name}</h1>
+              {/* <h1 className="text-xl text-black">{event.name}</h1> */}
               {event.description && (
                 <p className=" text-black mt-1 max-w-2xl">{event.description}</p>
               )}
@@ -175,8 +175,8 @@ export default function OrganizerEventDetailPage() {
               className="curs py-2 px-3 flex items-center gap-1.5"
               onClick={() => setShowEdit(true)}
             >
-              <Edit2 className="w-3.5 h-3.5 text-[#7367f0]" />
-              <span>Edit Event</span>
+              {/* <Edit2 className="w-3.5 h-3.5 text-[#7367f0]" /> */}
+              <span className='cursor-pointer'>Edit Event</span>
             </button>
             <button
               className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm"
@@ -190,14 +190,14 @@ export default function OrganizerEventDetailPage() {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
-          <div className="p-3.5 bg-[#f8f7fa] border border-[#dbdade]">
+          <div className="p-3.5  ">
             <div className="text-xl text-black">{event.certificates.length}</div>
-            <div className="text-xs text-[#6f6b7d] mt-0.5">
+            <div className="text-xs  mt-0.5">
               Certificates Configured
             </div>
           </div>
 
-          <div className="p-3.5 bg-[#f8f7fa] border border-[#dbdade]">
+          <div className="p-3.5 ">
             <div className="text-xl text-black">{totalRecipients}</div>
             <div className=" mt-0.5">
               Total Recipients
@@ -205,7 +205,7 @@ export default function OrganizerEventDetailPage() {
           </div>
 
           {event.startDate && (
-            <div className="p-3.5 bg-[#f8f7fa] border border-[#dbdade]">
+            <div className="p-3.5 ">
               <div className="text-sm text-black mt-1">
                 {new Date(event.startDate).toLocaleDateString()}
               </div>
@@ -255,7 +255,7 @@ export default function OrganizerEventDetailPage() {
                       name={cert.name}
                       className="w-full h-full"
                     />
-                    <div className="absolute top-2.5 right-2.5 bg-white/95 px-2 py-0.5 text-[10px] text-black border border-[#dbdade] shadow-xs z-10">
+                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 text-[10px] text-black  shadow-xs z-10">
                       {cert.status}
                     </div>
                   </div>
