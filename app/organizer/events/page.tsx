@@ -181,14 +181,14 @@ export default function OrganizerEventsPage() {
               <X className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#ebebed]">
-              <Calendar className="w-5 h-5 text-[#7367f0]" />
-              <h2 className="text-base text-black">Create New Event</h2>
+              {/* <Calendar className="w-5 h-5 text-[#7367f0]" /> */}
+              <h2 className=" text-black">Create New Event</h2>
             </div>
             <form onSubmit={handleCreate} className="space-y-3.5">
               <div>
                 <label className="form-label">Event Title *</label>
                 <input
-                  className="form-input text-xs"
+                  className="form-input "
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. ICPC Asia West Regional 2025"
@@ -206,7 +206,7 @@ export default function OrganizerEventsPage() {
                       onChange={(e) => setFormLogo(e.target.value)}
                       placeholder="Paste image URL (e.g. https://.../logo.png)"
                     /> */}
-                    <label className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                    <label className="underline py-2 px-3 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                       <span className='text-indigo-700'>Upload</span>
                       <input
                         type="file"

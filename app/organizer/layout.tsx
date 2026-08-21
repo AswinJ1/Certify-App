@@ -130,47 +130,26 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
                       size="lg"
                       className="data-[state=open]:bg-[#f8f7fa] data-[state=open]:text-[#2f2b3d] hover:bg-[#f8f7fa] transition-colors"
                     >
-                      <div className="flex aspect-square size-8 items-center justify-center bg-[#7367f0] text-white flex-shrink-0">
+                      {/* <div className="flex aspect-square size-8 items-center justify-center bg-[#7367f0] text-white flex-shrink-0">
                         {orgLogo ? (
                           <img src={orgLogo} alt={orgName} className="size-6 object-contain" />
                         ) : (
                           <Building2 className="size-4" />
                         )}
-                      </div>
-                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
-                        <span className="truncate font-semibold text-black">
+                      </div> */}
+                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
+                        <span className="truncate text-black">
                           {orgName}
                         </span>
-                        <span className="truncate text-[10px] text-[#7367f0]">
+                        <span className="truncate text-[10px] ">
                           Organizer Workspace
                         </span>
                       </div>
-                      <ChevronsUpDown className="ml-auto size-3.5 text-[#a5a2ad]" />
+                      <ChevronsUpDown className="ml-auto size-3.5 text-[#a5a2ad] group-data-[collapsible=icon]:hidden" />
                     </SidebarMenuButton>
                   }
                 />
-                <DropdownMenuContent
-                  className="w-56 bg-white border border-[#dbdade] p-1.5 shadow-lg"
-                  align="start"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <DropdownMenuLabel className="text-[10px] text-[#6f6b7d] uppercase tracking-wider px-2 py-1">
-                    Current Organization
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem className="gap-2.5 p-2 text-xs text-black cursor-pointer hover:bg-[#f8f7fa]">
-                    <Building2 className="size-4 text-[#7367f0]" />
-                    <span className="truncate font-medium">{orgName}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[#ebebed]" />
-                  <DropdownMenuItem
-                    onClick={() => router.push('/organizer/settings')}
-                    className="gap-2.5 p-2 text-xs text-black cursor-pointer hover:bg-[#f8f7fa]"
-                  >
-                    <Settings className="size-4 text-[#6f6b7d]" />
-                    <span>Organization Settings</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+         
               </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -192,8 +171,8 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
                     <SidebarMenuButton
                       render={
                         <Link href={item.href} className="flex items-center gap-2.5">
-                          <Icon className={`size-4 flex-shrink-0 ${isActive ? '' : ''}`} />
-                          <span>{item.label}</span>
+                          <Icon className="hidden size-4 shrink-0 group-data-[collapsible=icon]:block" />
+                          <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                         </Link>
                       }
                       isActive={isActive}
@@ -250,7 +229,7 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
                         alt={user.name}
                         className="size-8 border border-[#dbdade] object-cover bg-[#f8f7fa] flex-shrink-0"
                       />
-                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0">
+                      <div className="grid flex-1 text-left text-xs leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
                         <span className="truncate font-semibold text-black">
                           {user.name}
                         </span>
@@ -258,7 +237,7 @@ export default function OrganizerLayout({ children }: { children: React.ReactNod
                           {user.email}
                         </span>
                       </div>
-                      <ChevronsUpDown className="ml-auto size-3.5 text-[#a5a2ad]" />
+                      <ChevronsUpDown className="ml-auto size-3.5 text-[#a5a2ad] group-data-[collapsible=icon]:hidden" />
                     </SidebarMenuButton>
                   }
                 />

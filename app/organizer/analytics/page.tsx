@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Calendar } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -50,6 +49,10 @@ interface AnalyticsData {
   dailyDownloads: DailyDownload[];
   topCertificates: TopCert[];
   recentActivity: RecentActivity[];
+  eventCertificateDistribution: {
+    eventName: string;
+    certificateCount: number;
+  }[];
 }
 
 export default function OrganizerAnalyticsPage() {
@@ -57,6 +60,21 @@ export default function OrganizerAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+
+  const openDatePicker = (ref: React.RefObject<HTMLInputElement | null>) => {
+    const input = ref.current;
+    if (!input) return;
+
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === 'function') {
+      pickerInput.showPicker();
+      return;
+    }
+
+    input.focus();
+  };
 
   useEffect(() => {
     fetch('/api/organizer/analytics')
@@ -90,7 +108,7 @@ export default function OrganizerAnalyticsPage() {
     );
   }
 
-  const { summary, dailyDownloads, topCertificates, recentActivity } = data;
+  const { summary, dailyDownloads, topCertificates, recentActivity, eventCertificateDistribution } = data;
 
   const filteredDownloads = dailyDownloads.filter((d) => {
     if (startDate && d.date < startDate) return false;
@@ -105,11 +123,28 @@ export default function OrganizerAnalyticsPage() {
     { label: 'Total Events', value: summary.totalEvents, subtext: 'Registered organization programs' },
   ];
 
-  // ── ECharts: Multi-Stop Gradient Line & Area Chart ──
+  // ── ECharts: Large Interactive Area Chart ──
   const downloadTrendOption = {
     backgroundColor: 'transparent',
+    toolbox: {
+      right: 0,
+      top: 0,
+      itemSize: 14,
+      iconStyle: {
+        borderColor: '#9aa2b1',
+      },
+      feature: {
+        dataZoom: { yAxisIndex: 'none' },
+        restore: {},
+        saveAsImage: {},
+      },
+    },
     tooltip: {
       trigger: 'axis',
+      axisPointer: {
+        type: 'line',
+        lineStyle: { color: '#c9c7d0', type: 'dashed' },
+      },
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#dbdade',
       borderWidth: 1,
@@ -120,17 +155,38 @@ export default function OrganizerAnalyticsPage() {
         const p = params[0];
         return `<div style="font-size: 11px;">
           <span style="color: #6f6b7d;">${p.name}</span><br/>
-          <strong style="color: #7367f0; font-size: 13px;">${p.value}</strong> download(s)
+          <strong style="color: #ff4d8d; font-size: 13px;">${p.value}</strong> download(s)
         </div>`;
       },
     },
     grid: {
-      top: '12%',
+      top: '14%',
       left: '2%',
       right: '3%',
-      bottom: '10%',
+      bottom: '22%',
       containLabel: true,
     },
+    dataZoom: [
+      {
+        type: 'inside',
+        start: 0,
+        end: 100,
+      },
+      {
+        type: 'slider',
+        height: 22,
+        bottom: 8,
+        start: 0,
+        end: 100,
+        borderColor: '#e5e4e8',
+        fillerColor: 'rgba(255, 120, 165, 0.16)',
+        backgroundColor: '#f8f7fa',
+        handleStyle: {
+          color: '#ffffff',
+          borderColor: '#c7c4d2',
+        },
+      },
+    ],
     xAxis: {
       type: 'category',
       data: filteredDownloads.map((d) => d.date),
@@ -148,26 +204,14 @@ export default function OrganizerAnalyticsPage() {
       {
         name: 'Downloads',
         type: 'line',
-        smooth: 0.35,
-        symbol: 'circle',
-        symbolSize: 7,
+        smooth: 0.25,
+        showSymbol: false,
         lineStyle: {
-          width: 3.5,
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 1,
-            y2: 0,
-            colorStops: [
-              { offset: 0, color: '#7367f0' },
-              { offset: 0.5, color: '#9055fd' },
-              { offset: 1, color: '#00bad1' },
-            ],
-          },
+          width: 2.5,
+          color: '#ff4d8d',
         },
         itemStyle: {
-          color: '#7367f0',
+          color: '#ff4d8d',
           borderColor: '#ffffff',
           borderWidth: 2,
         },
@@ -179,9 +223,9 @@ export default function OrganizerAnalyticsPage() {
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(115, 103, 240, 0.42)' },
-              { offset: 0.6, color: 'rgba(144, 85, 253, 0.15)' },
-              { offset: 1, color: 'rgba(0, 186, 209, 0.01)' },
+              { offset: 0, color: 'rgba(255, 93, 143, 0.58)' },
+              { offset: 0.65, color: 'rgba(255, 93, 143, 0.26)' },
+              { offset: 1, color: 'rgba(255, 93, 143, 0.06)' },
             ],
           },
         },
@@ -190,21 +234,33 @@ export default function OrganizerAnalyticsPage() {
     ],
   };
 
-  // ── ECharts: Status Distribution Donut Chart ──
-  const verifiedCount = summary.totalDownloads;
-  const pendingCount = Math.max(0, summary.totalRecipients - summary.totalDownloads);
-  const draftCount = Math.max(0, summary.totalCertificates - summary.publishedCertificates);
+  const eventCertificateData =
+    eventCertificateDistribution.length > 0
+      ? eventCertificateDistribution.map((item) => ({ name: item.eventName, value: item.certificateCount }))
+      : Object.entries(
+          topCertificates.reduce<Record<string, number>>((acc, cert) => {
+            const key = cert.eventName || 'General Event';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {})
+        ).map(([name, value]) => ({ name, value }));
 
-  const statusDistributionOption = {
+  // ── ECharts: Event-wise Certificate Distribution Donut Chart ──
+  const eventDistributionOption = {
     backgroundColor: 'transparent',
     title: {
-      text: 'Status Distribution',
+      text: 'Certificates by Event',
+      subtext: `${summary.totalCertificates} total certificates`,
       left: 'left',
       top: 0,
       textStyle: {
-        fontSize: 14,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '',
         color: '#2f2b3d',
+      },
+      subtextStyle: {
+        fontSize: 15,
+        color: '#6f6b7d',
       },
     },
     tooltip: {
@@ -215,22 +271,29 @@ export default function OrganizerAnalyticsPage() {
       padding: [8, 14],
       textStyle: { color: '#2f2b3d', fontSize: 12, fontWeight: 500 },
       extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12); border-radius: 4px;',
-      formatter: '{b}: {c} ({d}%)',
+      formatter: (params: any) => {
+        return `<div style="font-size: 11px;">
+          <span style="color: #6f6b7d;">${params.name}</span><br/>
+          <strong style="color: #2f2b3d; font-size: 13px;">${params.value}</strong> certificate(s) <span style="color:#8f8a9b;">(${params.percent}%)</span>
+        </div>`;
+      },
     },
     legend: {
-      bottom: 8,
+      bottom: 0,
       left: 'center',
+      type: 'scroll',
       icon: 'roundRect',
       itemWidth: 14,
-      itemHeight: 10,
-      textStyle: { color: '#6f6b7d', fontSize: 12 },
+      itemHeight: 14,
+      itemGap: 12,
+      textStyle: { color: '#6f6b7d', fontSize: 15 },
     },
     series: [
       {
-        name: 'Status',
+        name: 'Certificates',
         type: 'pie',
-        radius: ['52%', '78%'],
-        center: ['50%', '48%'],
+        radius: ['54%', '76%'],
+        center: ['50%', '50%'],
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 0,
@@ -238,37 +301,51 @@ export default function OrganizerAnalyticsPage() {
           borderWidth: 2,
         },
         label: {
-          show: true,
-          formatter: '{b} ({d}%)',
-          fontSize: 11,
+          show: false,
+          formatter: '{b}: {c}',
+          fontSize: 10,
           color: '#6f6b7d',
         },
         labelLine: {
-          show: true,
-          length: 14,
-          length2: 18,
+          show: false,
+          length: 10,
+          length2: 14,
           smooth: true,
         },
-        color: ['#5cb85c', '#f0ad4e', '#d9534f'],
-        data: [
-          { value: verifiedCount, name: 'Verified' },
-          { value: pendingCount, name: 'Pending' },
-          { value: draftCount, name: 'Rejected' },
-        ],
+        color: ['#4c8eda', '#53c7d2', '#f6c343', '#f27d61', '#9276d8', '#6bcf8c', '#f06a9b', '#3cc0a7'],
+        data: eventCertificateData,
       },
     ],
   };
 
-  // ── ECharts: Top Performing Certificates Bar Chart ──
+  const topCertSource = topCertificates.slice(0, 6);
+  const radarLabels = topCertSource.length
+    ? topCertSource.map((c) => (c.name.length > 12 ? c.name.slice(0, 12) + '...' : c.name))
+    : ['No Data'];
+  const radarMaxValue = topCertSource.length
+    ? Math.max(5, ...topCertSource.map((c) => Math.max(c.downloads, c.recipients))) + 2
+    : 1;
+  const radarDownloads = topCertSource.length ? topCertSource.map((c) => c.downloads) : [0];
+  const radarRecipients = topCertSource.length ? topCertSource.map((c) => c.recipients) : [0];
+
+  // ── ECharts: Top Performing Certificates Radar Chart ──
   const topCertsOption = {
     backgroundColor: 'transparent',
     tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
+      trigger: 'item',
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderColor: '#dbdade',
       borderWidth: 1,
       textStyle: { color: '#2f2b3d', fontSize: 12 },
+      formatter: (params: any) => {
+        const metric = params.name;
+        const values = (params.value as number[]) || [];
+        const rows = radarLabels
+          .map((label, index) => `${label}: <strong>${values[index] ?? 0}</strong>`)
+          .join('<br/>');
+
+        return `<div style="font-size:11px;"><strong>${metric}</strong><br/>${rows}</div>`;
+      },
     },
     legend: {
       top: 0,
@@ -278,39 +355,58 @@ export default function OrganizerAnalyticsPage() {
       itemHeight: 10,
       textStyle: { color: '#6f6b7d', fontSize: 11 },
     },
-    grid: {
-      top: '16%',
-      left: '3%',
-      right: '4%',
-      bottom: '10%',
-      containLabel: true,
-    },
-    xAxis: {
-      type: 'category',
-      data: topCertificates.slice(0, 6).map((c) => (c.name.length > 12 ? c.name.slice(0, 12) + '...' : c.name)),
-      axisLine: { lineStyle: { color: '#dbdade' } },
-      axisLabel: { color: '#6f6b7d', fontSize: 11 },
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1,
-      splitLine: { lineStyle: { color: '#e5e4e8', type: 'dashed' } },
-      axisLabel: { color: '#6f6b7d', fontSize: 11 },
+    radar: {
+      center: ['50%', '58%'],
+      radius: '66%',
+      splitNumber: 4,
+      indicator: radarLabels.map((label) => ({ name: label, max: radarMaxValue })),
+      axisName: {
+        color: '#6f6b7d',
+        fontSize: 10,
+      },
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(76, 142, 218, 0.04)', 'rgba(83, 199, 210, 0.06)'],
+        },
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#dbdade',
+        },
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#dbdade',
+        },
+      },
     },
     series: [
       {
-        name: 'Downloads',
-        type: 'bar',
-        barWidth: '24%',
-        itemStyle: { color: '#7367f0', borderRadius: [3, 3, 0, 0] },
-        data: topCertificates.slice(0, 6).map((c) => c.downloads),
-      },
-      {
-        name: 'Recipients',
-        type: 'bar',
-        barWidth: '24%',
-        itemStyle: { color: '#00bad1', borderRadius: [3, 3, 0, 0] },
-        data: topCertificates.slice(0, 6).map((c) => c.recipients),
+        type: 'radar',
+        data: [
+          {
+            value: radarDownloads,
+            name: 'Downloads',
+            symbol: 'circle',
+            symbolSize: 7,
+            lineStyle: { color: '#7367f0', width: 2.5 },
+            itemStyle: { color: '#7367f0' },
+            areaStyle: {
+              color: 'rgba(115, 103, 240, 0.2)',
+            },
+          },
+          {
+            value: radarRecipients,
+            name: 'Recipients',
+            symbol: 'diamond',
+            symbolSize: 7,
+            lineStyle: { color: '#00bad1', width: 2.5 },
+            itemStyle: { color: '#00bad1' },
+            areaStyle: {
+              color: 'rgba(0, 186, 209, 0.18)',
+            },
+          },
+        ],
       },
     ],
   };
@@ -320,41 +416,93 @@ export default function OrganizerAnalyticsPage() {
       {/* Header with Interactive DatePicker */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-black tracking-tight">Organization Analytics</h1>
+          <h1 className="text-xl text-black tracking-tight">Organization Analytics</h1>
           <p className="text-xs text-[#6f6b7d] mt-0.5">
             Real-time metrics, download volume trends, and certificate engagement statistics
           </p>
         </div>
 
         {/* Interactive Date Range Picker */}
-        <div className="flex items-center gap-2 bg-[#f8f7fa] border border-[#dbdade] px-3 py-1.5 shadow-2xs self-start sm:self-auto">
-          <Calendar className="w-4 h-4 text-[#6f6b7d] flex-shrink-0" />
-          <div className="flex items-center gap-1.5 text-xs text-[#2f2b3d]">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-transparent border-0 text-xs text-[#2f2b3d] font-medium focus:outline-none cursor-pointer"
-            />
-            <span className="text-[#a5a2ad]">—</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-transparent border-0 text-xs text-[#2f2b3d] font-medium focus:outline-none cursor-pointer"
-            />
-          </div>
+        <div className="flex items-center gap-2  px-3 py-1.5 shadow-2xs self-start sm:self-auto">
+          {/* <Calendar className="w-4 h-4 text-[#6f6b7d] flex-shrink-0" /> */}
+        <div className="flex items-center gap-2">
+  {/* Start date */}
+  <div
+    className="flex h-9 items-center px-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer"
+    onClick={() => openDatePicker(startDateRef)}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mr-2 text-[#45414f]"
+    >
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <line x1="16" x2="16" y1="2" y2="6" />
+      <line x1="8" x2="8" y1="2" y2="6" />
+      <line x1="3" x2="21" y1="10" y2="10" />
+    </svg>
+
+    <input
+      ref={startDateRef}
+      type="date"
+      value={startDate}
+      onChange={(e) => setStartDate(e.target.value)}
+      className="w-26.25 bg-transparent text-sm font-medium text-[#3f3b48] outline-none cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+    />
+  </div>
+
+  <span className=" text-[#96929f]">to</span>
+
+  {/* End date */}
+  <div
+    className="flex h-9 items-center px-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer"
+    onClick={() => openDatePicker(endDateRef)}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mr-2 text-[#45414f]"
+    >
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <line x1="16" x2="16" y1="2" y2="6" />
+      <line x1="8" x2="8" y1="2" y2="6" />
+      <line x1="3" x2="21" y1="10" y2="10" />
+    </svg>
+
+    <input
+      ref={endDateRef}
+      type="date"
+      value={endDate}
+      onChange={(e) => setEndDate(e.target.value)}
+      className="w-26.25 bg-transparent text-sm font-medium text-[#3f3b48] outline-none cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+    />
+  </div>
+</div>
         </div>
       </div>
 
       {/* Metric Stat Cards - Zero Icons */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
-          <div key={card.label} className="materio-card p-4 bg-[#f8f7fa] border border-[#dbdade]">
+          <div key={card.label} className=" p-4  border">
             <div className="text-[11px] font-semibold text-[#6f6b7d] uppercase tracking-wider">
               {card.label}
             </div>
-            <div className="text-2xl font-bold text-black mt-1.5 tracking-tight">
+            <div className="text-2xl  text-black mt-1.5 tracking-tight">
               {card.value}
             </div>
             <div className="text-[11px] text-[#6f6b7d] mt-1 truncate">
@@ -365,10 +513,10 @@ export default function OrganizerAnalyticsPage() {
       </div>
 
       {/* Download Activity Chart with Gradient */}
-      <div className="materio-card p-6 bg-[#f8f7fa] border border-[#dbdade]">
-        <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#dbdade]">
+      <div className=" p-6 border ">
+        <div className="flex items-center justify-between mb-3 pb-3">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-black">
+            <h2 className="uppercase tracking-wider text-black">
               Download Activity
             </h2>
           </div>
@@ -379,17 +527,17 @@ export default function OrganizerAnalyticsPage() {
         </div>
       </div>
 
-      {/* Two Column Charts: Donut Status Distribution & Top Certs Bar Chart */}
+      {/* Two Column Charts: Event Distribution & Top Certs Bar Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Status Distribution Donut Chart */}
-        <div className="materio-card p-6 bg-[#f8f7fa] border border-[#dbdade]">
+        {/* Event-wise Certificate Distribution Donut Chart */}
+        <div className=" p-6  border ">
           <div className="h-80 w-full">
-            <ReactECharts option={statusDistributionOption} style={{ height: '100%', width: '100%' }} />
+            <ReactECharts option={eventDistributionOption} style={{ height: '100%', width: '100%' }} />
           </div>
         </div>
 
         {/* Top Performing Certificates Bar Chart */}
-        <div className="materio-card p-6 bg-[#f8f7fa] border border-[#dbdade]">
+        <div className=" p-6  border ">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#dbdade]">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-black">Top Performing Certificates</h2>
           </div>
@@ -402,30 +550,30 @@ export default function OrganizerAnalyticsPage() {
       {/* Shadcn Tables: Top Certificates & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Top Certificates Table */}
-        <div className="materio-card p-5 bg-[#f8f7fa] border border-[#dbdade]">
-          <div className="mb-3 pb-2 border-b border-[#dbdade]">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-black">Top Certificate Leaderboard</h2>
+        <div className="  p-5 ">
+          <div className="mb-3 pb-2 ">
+            <h2 className=" tracking-wider text-black">Top Certificate Leaderboard</h2>
           </div>
 
           {topCertificates.length === 0 ? (
             <div className="text-center py-8 text-xs text-[#6f6b7d]">No certificate activity recorded yet.</div>
           ) : (
-            <Table>
+            <Table className='border'>
               <TableHeader>
-                <TableRow className="border-[#dbdade]">
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase">Certificate</TableHead>
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase">Event</TableHead>
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase text-right">Recipients</TableHead>
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase text-right">Downloads</TableHead>
+                <TableRow className="border-[#dbdade] bg-white ">
+                  <TableHead className="text-xs text-[#6f6b7d]  uppercase">Certificate</TableHead>
+                  <TableHead className="text-xs text-[#6f6b7d]  uppercase">Event</TableHead>
+                  <TableHead className="text-xs text-[#6f6b7d] uppercase text-right">Recipients</TableHead>
+                  <TableHead className="text-xs text-[#6f6b7d]  uppercase text-right">Downloads</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {topCertificates.slice(0, 6).map((cert) => (
                   <TableRow key={cert.id} className="border-[#dbdade] hover:bg-white/60">
-                    <TableCell className="font-medium text-xs text-black truncate max-w-[130px]">{cert.name}</TableCell>
-                    <TableCell className="text-xs text-[#6f6b7d] truncate max-w-[110px]">{cert.eventName}</TableCell>
-                    <TableCell className="text-xs text-black text-right font-mono">{cert.recipients}</TableCell>
-                    <TableCell className="text-xs text-[#7367f0] font-semibold text-right font-mono">{cert.downloads}</TableCell>
+                    <TableCell className=" text-black truncate max-w-32.5">{cert.name}</TableCell>
+                    <TableCell className=" text-[#6f6b7d] truncate max-w-27.5">{cert.eventName}</TableCell>
+                    <TableCell className=" text-black text-right font-mono">{cert.recipients}</TableCell>
+                    <TableCell className="text-right font-mono">{cert.downloads}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -434,28 +582,28 @@ export default function OrganizerAnalyticsPage() {
         </div>
 
         {/* Recent Activity Table */}
-        <div className="materio-card p-5 bg-[#f8f7fa] border border-[#dbdade]">
-          <div className="mb-3 pb-2 border-b border-[#dbdade]">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-black">Recent Downloads</h2>
+        <div className=" p-5 ">
+          <div className="mb-3 pb-2">
+            <h2 className=" tracking-wider text-black">Recent Downloads</h2>
           </div>
 
           {recentActivity.length === 0 ? (
             <div className="text-center py-8 text-xs text-[#6f6b7d]">No certificate downloads yet.</div>
           ) : (
-            <Table>
+            <Table className='border'>
               <TableHeader>
-                <TableRow className="border-[#dbdade]">
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase">Recipient</TableHead>
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase">Certificate</TableHead>
-                  <TableHead className="text-xs text-[#6f6b7d] font-semibold uppercase text-right">Timestamp</TableHead>
+                <TableRow className="border-[#dbdade] bg-white">
+                  <TableHead className=" text-[#6f6b7d] font-semibold uppercase">Recipient</TableHead>
+                  <TableHead className=" text-[#6f6b7d] font-semibold uppercase">Certificate</TableHead>
+                  <TableHead className=" text-[#6f6b7d] font-semibold uppercase text-right">Timestamp</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentActivity.slice(0, 6).map((act) => (
                   <TableRow key={act.id} className="border-[#dbdade] hover:bg-white/60">
-                    <TableCell className="font-medium text-xs text-black truncate max-w-[130px]">{act.recipientName}</TableCell>
-                    <TableCell className="text-xs text-[#6f6b7d] truncate max-w-[120px]">{act.certName}</TableCell>
-                    <TableCell className="text-[11px] text-[#6f6b7d] text-right font-mono whitespace-nowrap">
+                    <TableCell className=" text-black truncate max-w-32.5">{act.recipientName}</TableCell>
+                    <TableCell className=" text-[#6f6b7d] truncate max-w-30">{act.certName}</TableCell>
+                    <TableCell className="text-[15px] text-[#6f6b7d] text-right font-mono whitespace-nowrap">
                       {new Date(act.downloadedAt).toLocaleDateString()} {new Date(act.downloadedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </TableCell>
                   </TableRow>
