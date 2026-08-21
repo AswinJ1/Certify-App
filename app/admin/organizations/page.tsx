@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Building2, Plus, Users, Calendar, ArrowRight, X, Mail } from 'lucide-react';
 
 interface Organization {
@@ -54,12 +55,18 @@ export default function OrganizationsPage() {
         body: JSON.stringify({ name: formName, email: formEmail, logo: formLogo || null }),
       });
       if (res.ok) {
+        toast.success('Organization created successfully');
         setFormName('');
         setFormEmail('');
         setFormLogo('');
         setShowCreate(false);
         loadOrgs();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to create organization');
       }
+    } catch {
+      toast.error('Network error while creating organization');
     } finally {
       setCreating(false);
     }

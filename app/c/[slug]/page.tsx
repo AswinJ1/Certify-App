@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { toast } from 'sonner';
 import { Download, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface FormField {
@@ -89,12 +90,17 @@ export default function PublicCertificatePage({ params }: { params: Promise<{ sl
       const data = await res.json();
 
       if (!res.ok || !data.found) {
-        setSearchError(data.error || 'No matching certificate found. Please check your credentials.');
+        const errorMsg = data.error || 'No matching certificate found. Please check your credentials.';
+        setSearchError(errorMsg);
+        toast.error(errorMsg);
       } else {
         setSearchResult(data);
+        toast.success('Certificate record found and verified');
       }
     } catch {
-      setSearchError('Network error. Please check your internet connection.');
+      const errorMsg = 'Network error. Please check your internet connection.';
+      setSearchError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSearching(false);
     }
@@ -103,6 +109,7 @@ export default function PublicCertificatePage({ params }: { params: Promise<{ sl
   const handleDownload = async () => {
     if (!searchResult) return;
     setDownloading(true);
+    toast.info('Generating high-resolution PDF certificate...');
 
     try {
       const res = await fetch(`/api/public/${slug}/download`, {
@@ -117,7 +124,9 @@ export default function PublicCertificatePage({ params }: { params: Promise<{ sl
 
       if (!res.ok) {
         const err = await res.json();
-        setSearchError(err.error || 'Download failed');
+        const errorMsg = err.error || 'Download failed';
+        setSearchError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
@@ -130,8 +139,11 @@ export default function PublicCertificatePage({ params }: { params: Promise<{ sl
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success('Certificate downloaded successfully');
     } catch {
-      setSearchError('Failed to generate certificate PDF');
+      const errorMsg = 'Failed to generate certificate PDF';
+      setSearchError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setDownloading(false);
     }

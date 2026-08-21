@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 import {
   Calendar,
@@ -83,10 +84,16 @@ export default function OrganizerEventDetailPage() {
         body: JSON.stringify({ name: certName, eventId: id }),
       });
       if (res.ok) {
+        toast.success('Certificate created successfully');
         setCertName('');
         setShowCreate(false);
         loadEvent();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to create certificate');
       }
+    } catch {
+      toast.error('Network error while creating certificate');
     } finally {
       setCreating(false);
     }
@@ -106,9 +113,15 @@ export default function OrganizerEventDetailPage() {
         }),
       });
       if (res.ok) {
+        toast.success('Event details updated successfully');
         setShowEdit(false);
         loadEvent();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to update event');
       }
+    } catch {
+      toast.error('Network error while updating event');
     } finally {
       setSavingEdit(false);
     }
@@ -230,15 +243,15 @@ export default function OrganizerEventDetailPage() {
 
         {event.certificates.length === 0 ? (
           <div className="materio-card p-10 text-center bg-white border border-[#dbdade]">
-            <Award className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" />
+            {/* <Award className="w-8 h-8 text-[#a5a2ad] mx-auto mb-2" /> */}
             <h3 className="text-black">No certificates configured yet</h3>
             <p className=" mt-1 mb-4">
               Add a certificate template to start issuing dynamic credentials for this event.
             </p>
-            <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
+            {/* <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
               <Plus className="w-4 h-4" />
               <span>Create Certificate</span>
-            </button>
+            </button> */}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

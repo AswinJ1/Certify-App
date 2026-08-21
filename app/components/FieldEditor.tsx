@@ -703,7 +703,7 @@ export default function FieldEditor({
             type="button"
             onClick={onSave}
             disabled={saving}
-            className="btn-success text-xs py-1.5 px-4 flex items-center gap-1.5 shadow-sm"
+            className=" text-xs py-1.5 px-4 flex items-center gap-1.5 shadow-sm"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{saving ? 'Saving...' : 'Save Fields'}</span>
@@ -924,7 +924,7 @@ export default function FieldEditor({
                       : 'text-[#6f6b7d] hover:text-[#2f2b3d]'
                   }`}
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-[#28c76f]" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 " />
                   <span>Columns</span>
                 </button>
               )}

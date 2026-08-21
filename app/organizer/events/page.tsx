@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Calendar, Plus, Award, X, ArrowRight, Clock, Image as ImageIcon } from 'lucide-react';
 
 interface Event {
@@ -55,6 +56,7 @@ export default function OrganizerEventsPage() {
         }),
       });
       if (res.ok) {
+        toast.success('Event created successfully');
         setFormName('');
         setFormDesc('');
         setFormLogo('');
@@ -62,7 +64,12 @@ export default function OrganizerEventsPage() {
         setFormEnd('');
         setShowCreate(false);
         loadEvents();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to create event');
       }
+    } catch {
+      toast.error('Network error while creating event');
     } finally {
       setCreating(false);
     }
