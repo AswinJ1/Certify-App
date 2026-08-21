@@ -106,7 +106,7 @@ export default function OrganizerCertificatesPage() {
                     name={cert.name}
                     className="w-full h-full"
                   />
-                  <div className="absolute top-2.5 right-2.5 bg-white/95 px-2 py-0.5 text-[10px] text-black border border-[#dbdade] shadow-xs z-10">
+                  <div className="absolute top-2.5 right-2.5  px-2 py-0.5  text-black   z-10">
                     {cert.status}
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export default function OrganizerCertificatesPage() {
             >
               <div className="materio-card p-3.5 bg-white border border-[#dbdade] hover:border-[#7367f0] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-16 h-12 bg-[#f8f7fa] border border-[#dbdade] overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  <div className="w-20 h-16 bg-[#f8f7fa] border border-[#dbdade] overflow-hidden flex-shrink-0 flex items-center justify-center">
                     <CertificateThumbnail
                       url={cert.template?.fileKey}
                       name={cert.name}
@@ -156,7 +156,7 @@ export default function OrganizerCertificatesPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-black group-hover:text-[#7367f0] transition-colors truncate font-semibold">
+                    <div className="text-black group-hover:text-[#7367f0] transition-colors truncate ">
                       {cert.name}
                     </div>
                     <div className="text-xs text-[#6f6b7d] mt-0.5 flex items-center gap-1.5 truncate">
@@ -176,7 +176,7 @@ export default function OrganizerCertificatesPage() {
                     <div className="text-[10px] text-[#6f6b7d] tracking-wider uppercase">Fields</div>
                   </div>
 
-                  <span className="text-xs text-black border border-[#dbdade] px-2 py-0.5 bg-[#f8f7fa]">
+                  <span className="text-xs text-black  px-2 py-0.5 ">
                     {cert.status}
                   </span>
 

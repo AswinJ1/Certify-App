@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { UploadDropzone } from '@/lib/uploadthing';
 import { RefreshCw, AlertCircle, CheckCircle2, UploadCloud, FileSpreadsheet, FileText, ArrowUpCircle } from 'lucide-react';
 
@@ -76,6 +77,7 @@ export default function UploadWithRetry({
       setIsUploading(false);
       const msg = err instanceof Error ? err.message : 'Upload failed. Please retry.';
       setUploadError(msg);
+      toast.error(msg);
     }
   };
 
@@ -92,49 +94,15 @@ export default function UploadWithRetry({
     <div className="w-full space-y-3">
       {title && (
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 ">
-            <UploadCloud className="w-4 h-4 " />
-            <span>{title}</span>
+          <div className="flex items-center gap-2">
+            <UploadCloud className="w-4 h-4 text-[#7367f0]" />
+            <span className="text-xs font-semibold text-[#2f2b3d]">{title}</span>
           </div>
-          {retryCount > 0 && (
-            <span className="text-[11px] text-[#6f6b7d]">
-              Retries attempted: {retryCount}
-            </span>
-          )}
         </div>
       )}
 
       {description && (
         <p className="text-xs text-[#6f6b7d] -mt-1">{description}</p>
-      )}
-
-      {uploadSuccess && (
-        <div className="flex items-center gap-2 p-3 bg-[#28c76f]/10 border border-[#28c76f]/30 text-[#28c76f] text-xs font-semibold animate-in">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          <span>Upload & processing completed successfully! {lastUploadedName ? `(${lastUploadedName})` : ''}</span>
-        </div>
-      )}
-
-      {uploadError && (
-        <div className="p-3 bg-[#ea5455]/10 border border-[#ea5455]/30 text-[#ea5455] text-xs space-y-2 animate-in">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold">Upload failed or file format unreadable</div>
-              <div className="text-[11px] text-[#ea5455]/90 mt-0.5">{uploadError}</div>
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="btn-danger text-xs py-1 px-3 flex items-center gap-1.5"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Retry Upload</span>
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Main Dropzone Box */}
@@ -152,10 +120,6 @@ export default function UploadWithRetry({
               onChange={handleDirectFileSelect}
               className="hidden"
             />
-
-            {/* <div className="w-12 h-12 bg-[#7367f0]/10 text-[#7367f0] group-hover:bg-[#7367f0] group-hover:text-white transition-colors flex items-center justify-center mb-1">
-              <FileSpreadsheet className="w-6 h-6" />
-            </div> */}
 
             <div>
               Click to browse or drop spreadsheet file here
@@ -194,6 +158,7 @@ export default function UploadWithRetry({
               setIsUploading(false);
               const msg = err?.message || 'Upload timed out. Please check network connection and retry.';
               setUploadError(msg);
+              toast.error(msg);
 
               // Auto-retry with backoff if first failure
               if (retryCount < 2) {
@@ -214,9 +179,17 @@ export default function UploadWithRetry({
         )}
 
         {isUploading && (
-          <div className="mt-4 flex items-center justify-center gap-2.5 text-xs text-[#7367f0] font-bold animate-in">
+          <div className="mt-4 flex items-center justify-center gap-2.5 text-xs text-[#7367f0] font-semibold animate-in">
             <div className="spinner" style={{ width: '16px', height: '16px' }} />
-            <span>Reading and parsing spreadsheet records into database...</span>
+            <span>
+              {endpoint === 'datasetUploader'
+                ? 'Uploading and processing recipient records...'
+                : endpoint === 'templateUploader'
+                ? 'Uploading certificate template image...'
+                : endpoint === 'logoUploader'
+                ? 'Uploading branding logo...'
+                : 'Uploading and processing file...'}
+            </span>
           </div>
         )}
       </div>

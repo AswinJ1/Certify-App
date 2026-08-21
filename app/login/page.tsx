@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   Award,
   ArrowRight,
@@ -44,9 +45,13 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Authentication failed');
+        const errorMsg = data.error || 'Authentication failed';
+        setError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
+
+      toast.success(isRegister ? 'Account created successfully! Redirecting...' : 'Signed in successfully! Redirecting...');
 
       if (data.user?.role === 'SUPER_ADMIN') {
         router.push('/admin');
@@ -54,7 +59,9 @@ export default function LoginPage() {
         router.push('/organizer');
       }
     } catch {
-      setError('Network error. Please verify your connection.');
+      const errorMsg = 'Network error. Please verify your connection.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

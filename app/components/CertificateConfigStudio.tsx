@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   FileText,
   Image as ImageIcon,
@@ -102,7 +103,6 @@ export default function CertificateConfigStudio({
   const [loading, setLoading] = useState(true);
   const [activeStep, setActiveStep] = useState<Step>('overview');
   const [saving, setSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Field editor state
@@ -119,17 +119,12 @@ export default function CertificateConfigStudio({
   const [eventLogoInput, setEventLogoInput] = useState('');
   const [savingEventLogo, setSavingEventLogo] = useState(false);
 
-  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
   const handleCopyLink = () => {
     if (!cert?.publicSlug) return;
     const url = typeof window !== 'undefined' ? `${window.location.origin}/c/${cert.publicSlug}` : `/c/${cert.publicSlug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
-    showToast('Public certificate link copied to clipboard!');
+    toast.success('Public certificate link copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -155,7 +150,7 @@ export default function CertificateConfigStudio({
           );
         }
       })
-      .catch(() => showToast('Failed to load certificate data', 'error'))
+      .catch(() => toast.error('Unable to load certificate configuration'))
       .finally(() => setLoading(false));
   }, [certificateId]);
 
@@ -174,13 +169,13 @@ export default function CertificateConfigStudio({
         body: JSON.stringify({ fileUrl: res[0].ufsUrl, fileKey: res[0].key, fileName: res[0].name }),
       });
       if (response.ok) {
-        showToast('Certificate template uploaded successfully!');
+        toast.success('Certificate template uploaded and configured successfully');
         loadCert();
       } else {
-        showToast('Failed to register template with certificate', 'error');
+        toast.error('Failed to register template with certificate');
       }
     } catch {
-      showToast('Error uploading template', 'error');
+      toast.error('Error uploading certificate template. Please retry.');
     } finally {
       setSaving(false);
     }
@@ -196,13 +191,13 @@ export default function CertificateConfigStudio({
         body: JSON.stringify({ fields: editFields }),
       });
       if (res.ok) {
-        showToast('Fields saved successfully!');
+        toast.success('Certificate fields and layout saved successfully');
         loadCert();
       } else {
-        showToast('Error saving fields', 'error');
+        toast.error('Failed to save certificate fields');
       }
     } catch {
-      showToast('Network error while saving fields', 'error');
+      toast.error('Network error while saving certificate fields');
     } finally {
       setSaving(false);
     }
@@ -212,7 +207,7 @@ export default function CertificateConfigStudio({
   const handleDatasetUploaded = async (res: { ufsUrl: string; key: string; name: string }[]) => {
     if (!res[0]) return;
     if (res[0].ufsUrl?.startsWith('local_')) {
-      showToast('Dataset uploaded & recipient records populated!');
+      toast.success('Recipient dataset processed and records populated');
       loadCert();
       return;
     }
@@ -224,13 +219,13 @@ export default function CertificateConfigStudio({
         body: JSON.stringify({ fileUrl: res[0].ufsUrl, fileKey: res[0].key, fileName: res[0].name }),
       });
       if (response.ok) {
-        showToast('Dataset uploaded & recipient records populated!');
+        toast.success('Recipient dataset processed and records populated');
         loadCert();
       } else {
-        showToast('Failed to process dataset file', 'error');
+        toast.error('Failed to process dataset file');
       }
     } catch {
-      showToast('Error uploading dataset', 'error');
+      toast.error('Error uploading dataset');
     } finally {
       setSaving(false);
     }
@@ -253,14 +248,14 @@ export default function CertificateConfigStudio({
         }),
       });
       if (res.ok) {
-        showToast('Field mappings saved successfully!');
+        toast.success('Field mappings saved successfully');
         loadCert();
       } else {
         const data = await res.json().catch(() => ({}));
-        showToast(data.error || 'Failed to save mappings', 'error');
+        toast.error(data.error || 'Failed to save field mappings');
       }
     } catch {
-      showToast('Network error while saving mappings', 'error');
+      toast.error('Network error while saving field mappings');
     } finally {
       setSaving(false);
     }
@@ -277,14 +272,14 @@ export default function CertificateConfigStudio({
         body: JSON.stringify({ logo: eventLogoInput || null }),
       });
       if (res.ok) {
-        showToast('Event logo saved successfully!');
+        toast.success('Event logo saved successfully');
         setShowEventLogoModal(false);
         loadCert();
       } else {
-        showToast('Failed to update event logo', 'error');
+        toast.error('Failed to update event logo');
       }
     } catch {
-      showToast('Network error while saving logo', 'error');
+      toast.error('Network error while saving logo');
     } finally {
       setSavingEventLogo(false);
     }
@@ -311,13 +306,13 @@ export default function CertificateConfigStudio({
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Lookup form configuration saved!');
+        toast.success('Public lookup form configuration saved');
         loadCert();
       } else {
-        showToast(data.error || 'Failed to save form configuration', 'error');
+        toast.error(data.error || 'Failed to save form configuration');
       }
     } catch {
-      showToast('Network error while saving form', 'error');
+      toast.error('Network error while saving form configuration');
     } finally {
       setSaving(false);
     }
@@ -330,13 +325,13 @@ export default function CertificateConfigStudio({
       const res = await fetch(`/api/certificates/${certificateId}/publish`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        showToast(`Certificate is now live!`);
+        toast.success('Certificate is now live and published!');
         loadCert();
       } else {
-        showToast(`Publishing failed: ${data.errors?.join(', ') || data.error}`, 'error');
+        toast.error(`Publishing failed: ${data.errors?.join(', ') || data.error}`);
       }
     } catch {
-      showToast('Network error during publishing', 'error');
+      toast.error('Network error during publishing');
     } finally {
       setSaving(false);
     }
@@ -352,14 +347,14 @@ export default function CertificateConfigStudio({
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        showToast(`Status updated to ${newStatus}`);
+        toast.success(`Certificate status updated to ${newStatus}`);
         loadCert();
       } else {
         const data = await res.json();
-        showToast(`Error: ${data.error}`, 'error');
+        toast.error(`Failed to update status: ${data.error}`);
       }
     } catch {
-      showToast('Network error updating status', 'error');
+      toast.error('Network error updating certificate status');
     } finally {
       setSaving(false);
     }
@@ -369,7 +364,7 @@ export default function CertificateConfigStudio({
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    showToast('Public link copied to clipboard!');
+    toast.success('Public certificate link copied to clipboard');
   };
 
   if (loading) {
@@ -408,24 +403,6 @@ export default function CertificateConfigStudio({
 
   return (
     <div className="space-y-6 animate-in">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div
-          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg text-xs font-semibold flex items-center gap-2.5 animate-in ${
-            toastMessage.type === 'success'
-              ? 'bg-white border-[#28c76f] text-[#28c76f]'
-              : 'bg-white border-[#ea5455] text-[#ea5455]'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-[#28c76f]" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-[#ea5455]" />
-          )}
-          <span>{toastMessage.text}</span>
-        </div>
-      )}
-
       {/* Top Header & Breadcrumbs */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -484,11 +461,11 @@ export default function CertificateConfigStudio({
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#7367f0]'}`} />
               <span>
-                {idx + 1}. {step.label}
+               {step.label}
               </span>
-              {step.done && step.key !== 'overview' && (
+              {/* {step.done && step.key !== 'overview' && (
                 <CheckCircle2 className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#28c76f]'}`} />
-              )}
+              )} */}
             </button>
           );
         })}
@@ -538,7 +515,7 @@ export default function CertificateConfigStudio({
                   <img
                     src={cert.event.organization.logo}
                     alt={cert.event.organization.name}
-                    className="h-10 max-w-[120px] object-contain"
+                    className="h-10 max-w-30 object-contain"
                   />
                 ) : (
                   <div className="px-2.5 py-1 bg-[#7367f0]/10 text-[#7367f0] font-bold text-xs">
@@ -549,7 +526,7 @@ export default function CertificateConfigStudio({
                   <img
                     src={cert.event.logo}
                     alt={cert.event.name}
-                    className="h-10 max-w-[120px] object-contain"
+                    className="h-10 max-w-30 object-contain"
                   />
                 ) : (
                   <div className="px-2.5 py-1 bg-[#f8f7fa] border border-dashed border-[#dbdade] text-[#a5a2ad] text-xs">
@@ -605,26 +582,14 @@ export default function CertificateConfigStudio({
       {/* ── STEP 2: TEMPLATE UPLOAD ── */}
       {activeStep === 'template' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
-          <div className="border-none pb-4">
-            <h2 className="text-lg">Certificate Background Template</h2>
-            <p className="mt-0.5">
-              Upload a single-page PDF or high-resolution image background for this certificate
-            </p>
-          </div>
-
-          {cert.template && (
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {/* <div className="p-2 bg-white border border-[#28c76f]/40 text-[#28c76f]">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div> */}
-                <div>
-                  {/* <div className="">Current Template Active</div> */}
-                  {/* <div className="text-[11px] text-[#6f6b7d] mt-0.5 font-mono truncate max-w-md">
-                    {(cert.template.metadata as Record<string, string>)?.fileName || cert.template.fileKey}
-                  </div> */}
-                </div>
-              </div>
+          <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
+            <div>
+              <h2 className="text-lg">Certificate Background Template</h2>
+              <p className="mt-0.5">
+                Upload a single-page PDF or high-resolution image background for this certificate
+              </p>
+            </div>
+            {cert.template && (
               <button
                 onClick={() => setActiveStep('dataset')}
                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
@@ -632,8 +597,8 @@ export default function CertificateConfigStudio({
                 <span>Proceed to Recipients Upload</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           <UploadWithRetry
             endpoint="templateUploader"
@@ -678,18 +643,22 @@ export default function CertificateConfigStudio({
       {/* ── STEP 4: DATASET UPLOAD ── */}
       {activeStep === 'dataset' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
-          <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-lg">Recipient Dataset Import</h2>
-            <p className=" mt-0.5">
-              Upload recipient data spreadsheet (CSV or XLSX). Each row represents a certificate recipient.
-            </p>
-               <button
+          <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
+            <div>
+              <h2 className="text-lg">Recipient Dataset Import</h2>
+              <p className="mt-0.5">
+                Upload recipient data spreadsheet (CSV or XLSX). Each row represents a certificate recipient.
+              </p>
+            </div>
+            {cert.datasets.length > 0 && (
+              <button
                 onClick={() => setActiveStep('fields')}
                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
               >
                 <span>Proceed to Fields Editor</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
+            )}
           </div>
 
           {cert.datasets.length > 0 && (
@@ -727,18 +696,20 @@ export default function CertificateConfigStudio({
       {/* ── STEP 5: FIELD MAPPING ── */}
       {activeStep === 'mapping' && (
         <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
-          <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-lg">Field Column Mapping</h2>
-            <p className="mt-0.5">
-              Connect spreadsheet columns to the dynamic text fields configured on the certificate
-            </p>
-               <button
-                onClick={() => setActiveStep('form')}
-                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
-              >
-                <span>Proceed to Form Fields</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+          <div className="flex items-center justify-between border-b border-[#ebebed] pb-4">
+            <div>
+              <h2 className="text-lg">Field Column Mapping</h2>
+              <p className="mt-0.5">
+                Connect spreadsheet columns to the dynamic text fields configured on the certificate
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveStep('form')}
+              className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+            >
+              <span>Proceed to Form Fields</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {cert.fields.length === 0 || allColumns.length === 0 ? (
@@ -761,7 +732,7 @@ export default function CertificateConfigStudio({
                       </div>
 
                       <div className="sm:w-1/2 flex items-center gap-2">
-                        <Link2 className="w-4 h-4 text-[#7367f0] flex-shrink-0" />
+                        <Link2 className="w-4 h-4 text-[#7367f0] shrink-0" />
                         <select
                           className="form-input text-xs"
                           value={currentMapping?.columnId || ''}
@@ -924,145 +895,192 @@ export default function CertificateConfigStudio({
 
       {/* ── STEP 7: PUBLISH & LIFECYCLE ── */}
       {activeStep === 'publish' && (
-        <div className="materio-card p-6 bg-white border border-[#dbdade] space-y-6">
-          <div className="border-b border-[#ebebed] pb-4">
-            <h2 className="text-lg">Publishing & Lifecycle Control</h2>
-            <p className="mt-0.5">
-              Review configuration readiness and manage the live status of the certificate download portal
+  <div className="materio-card p-5 bg-white border border-[#dbdade] space-y-3">
+
+    {/* Header */}
+    <div className="border-b border-[#ebebed] pb-2">
+      <h2 className="text-xl">Publishing & Lifecycle Control</h2>
+      <p className="mt-0.5">
+        Review configuration readiness and manage the live status of the certificate download portal
+      </p>
+    </div>
+
+    {/* ── PRE-FLIGHT CHECKLIST ── */}
+    <div>
+      <div className="mb-1.5 text-lg tracking-wider text-[#2f2b3d]">
+        Pre-flight Checklist
+      </div>
+
+    <div className="inline-block overflow-hidden border border-[#dbdade] align-top">
+  <table className="w-[420px] table-fixed border-collapse  leading-tight text-[#2f2b3d]">
+    <thead>
+      <tr className="border-b border-[#d6d4dc] bg-white">
+        <th className="w-[300px] px-3 py-[7px] text-left font-semibold">
+          Checklist Item
+        </th>
+        <th className="w-[120px] px-3 py-[7px] text-left font-semibold">
+          Status
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {steps.slice(1, -1).map((s) => (
+        <tr
+          key={s.key}
+          className="border-b border-[#e3e1e8] bg-[#f8f7fa] last:border-b-0"
+        >
+          <td className="px-3 py-[7px]">
+            {s.label}
+          </td>
+
+          <td className="px-3 py-[7px]">
+            {s.done ? 'Ready' : 'Incomplete'}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+    </div>
+
+    {/* ── ACTION AREA ── */}
+    <div className="border-t border-[#ebebed] pt-2.5">
+
+      {/* ── PUBLISHED ── */}
+      {cert.status === 'PUBLISHED' ? (
+        <div className="space-y-3">
+
+          {/* Live Status */}
+          <div className="border border-[#dbdade] p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2f2b3d]">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Certificate is Live & Searchable!</span>
+            </div>
+
+            <p className="mt-1 text-xs text-[#2f2b3d]">
+              Participants can visit the public lookup page and generate their certificates directly.
+            </p>
+
+            {/* Public Link */}
+            <div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+
+              <div className="flex-1 truncate select-all border border-[#dbdade] bg-white px-3 py-1.5 text-xs font-mono text-[#2f2b3d]">
+                {typeof window !== 'undefined'
+                  ? `${window.location.origin}/c/${cert.publicSlug}`
+                  : `/c/${cert.publicSlug}`}
+              </div>
+
+              <a
+                href={`/c/${cert.publicSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary flex items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1.5 text-xs no-underline"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Visit Public Page</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="btn-secondary flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1.5 text-xs"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-[#28c76f]" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+
+                <span>{copied ? 'Copied!' : 'Copy URL'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Published Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleStatusChange('PAUSED')}
+              disabled={saving}
+              className="btn-secondary flex items-center gap-1.5 px-4 py-2 text-xs"
+            >
+              <PauseCircle className="w-4 h-4 text-[#ff9f43]" />
+              <span>Pause Certificate</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleStatusChange('ARCHIVED')}
+              disabled={saving}
+              className="btn-danger flex items-center gap-1.5 px-4 py-2 text-xs"
+            >
+              <Archive className="w-4 h-4" />
+              <span>Archive</span>
+            </button>
+          </div>
+        </div>
+
+      ) : cert.status === 'PAUSED' ? (
+
+        /* ── PAUSED ── */
+        <div className="space-y-3">
+
+          {/* Paused Status */}
+          <div className="border border-[#ff9f43]/30 bg-[#ff9f43]/10 p-3">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#d97706]">
+              <PauseCircle className="w-4 h-4" />
+              <span>Certificate is Paused</span>
+            </div>
+
+            <p className="mt-1 text-xs text-[#2f2b3d]">
+              Public searches are temporarily disabled. You can resume publishing anytime.
             </p>
           </div>
 
-          {/* Checklist */}
-          <div className="space-y-2">
-            <div className="tracking-wider mb-2">
-              Pre-flight Checklist
-            </div>
-            {steps.slice(1, -1).map((s) => (
-              <div
-                key={s.key}
-                className="p-3 bg-[#f8f7fa] border border-[#dbdade] flex items-center justify-between text-xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  {s.done ? (
-                    <CheckCircle2 className="w-4 h-4 text-[#28c76f]" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-[#ea5455]" />
-                  )}
-                  <span className="font-semibold text-[#2f2b3d]">{s.label}</span>
-                </div>
-                <span className={s.done ? 'text-[#28c76f] font-semibold' : 'text-[#ea5455] font-semibold'}>
-                  {s.done ? 'Ready' : 'Incomplete'}
-                </span>
-              </div>
-            ))}
-          </div>
+          {/* Paused Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleStatusChange('PUBLISHED')}
+              disabled={saving}
+              className="btn-success flex items-center gap-1.5 px-4 py-2 text-xs"
+            >
+              <PlayCircle className="w-4 h-4" />
+              <span>Resume Publishing</span>
+            </button>
 
-          {/* Action Area */}
-          <div className="pt-4 border-t border-[#ebebed]">
-            {cert.status === 'PUBLISHED' ? (
-              <div className="space-y-4">
-                <div className="p-4  border ">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Certificate is Live & Searchable!</span>
-                  </div>
-                  <p className="text-xs text-[#2f2b3d] mt-1">
-                    Participants can visit the public lookup page and generate their certificates directly.
-                  </p>
-                  
-                  {/* Public Link Box with Visit and Copy buttons */}
-                  <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <div className="flex-1 bg-white border border-[#dbdade] px-3 py-1.5 text-xs font-mono text-[#2f2b3d] truncate select-all">
-                      {typeof window !== 'undefined' ? `${window.location.origin}/c/${cert.publicSlug}` : `/c/${cert.publicSlug}`}
-                    </div>
-                    <a
-                      href={`/c/${cert.publicSlug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 no-underline whitespace-nowrap"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Visit Public Page</span>
-                    </a>
-                    <button
-                      type="button"
-                      onClick={handleCopyLink}
-                      className="btn-secondary text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-[#28c76f]" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copied ? 'Copied!' : 'Copy URL'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('PAUSED')}
-                    disabled={saving}
-                    className="btn-secondary text-xs py-2 px-4 flex items-center gap-1.5"
-                  >
-                    <PauseCircle className="w-4 h-4 text-[#ff9f43]" />
-                    <span>Pause Certificate</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('ARCHIVED')}
-                    disabled={saving}
-                    className="btn-danger text-xs py-2 px-4 flex items-center gap-1.5"
-                  >
-                    <Archive className="w-4 h-4" />
-                    <span>Archive</span>
-                  </button>
-                </div>
-              </div>
-            ) : cert.status === 'PAUSED' ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-[#ff9f43]/10 border border-[#ff9f43]/30">
-                  <div className="font-bold text-sm text-[#d97706] flex items-center gap-2">
-                    <PauseCircle className="w-4 h-4" />
-                    <span>Certificate is Paused</span>
-                  </div>
-                  <p className="text-xs text-[#2f2b3d] mt-1">
-                    Public searches are temporarily disabled. You can resume publishing anytime.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('PUBLISHED')}
-                    disabled={saving}
-                    className="btn-success text-xs py-2 px-4 flex items-center gap-1.5"
-                  >
-                    <PlayCircle className="w-4 h-4" />
-                    <span>Resume Publishing</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('ARCHIVED')}
-                    disabled={saving}
-                    className="btn-danger text-xs py-2 px-4 flex items-center gap-1.5"
-                  >
-                    <Archive className="w-4 h-4" />
-                    <span>Archive</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handlePublish}
-                disabled={saving}
-                className="btn-success text-sm py-2.5 px-6 flex items-center gap-2 shadow-md"
-              >
-                <Send className="w-4 h-4" />
-                <span>{saving ? 'Publishing...' : 'Publish Certificate Now'}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => handleStatusChange('ARCHIVED')}
+              disabled={saving}
+              className="btn-danger flex items-center gap-1.5 px-4 py-2 text-xs"
+            >
+              <Archive className="w-4 h-4" />
+              <span>Archive</span>
+            </button>
           </div>
         </div>
+
+      ) : (
+
+        /* ── NOT PUBLISHED ── */
+        <button
+          type="button"
+          onClick={handlePublish}
+          disabled={saving}
+          className="bg-[#7367f0]  text-white flex items-center gap-2 px-6 py-2.5 text-sm shadow-md"
+        >
+          {/* <Send className="w-4 h-4" /> */}
+
+          <span>
+            {saving ? 'Publishing...' : 'Publish Certificate Now'}
+          </span>
+        </button>
       )}
+    </div>
+  </div>
+)}
 
       {/* Edit Event Logo Modal */}
       {showEventLogoModal && (
@@ -1115,7 +1133,7 @@ export default function CertificateConfigStudio({
 
                   {eventLogoInput && (
                     <div className="p-2 bg-[#f8f7fa] border border-[#dbdade] flex items-center justify-between">
-                      <img src={eventLogoInput} alt="Event Logo" className="h-8 max-w-[120px] object-contain" />
+                      <img src={eventLogoInput} alt="Event Logo" className="h-8 max-w-30 object-contain" />
                       <button
                         type="button"
                         onClick={() => setEventLogoInput('')}

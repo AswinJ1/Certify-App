@@ -479,3 +479,106 @@ body {
   width: 100%;
   cursor: pointer;
 }
+
+/* ── Production Vercel / Supabase Toast Signature Styling ── */
+[data-sonner-toaster] {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+[data-sonner-toast] {
+  font-family: var(--font-sans) !important;
+}
+
+.vercel-toast {
+  background: #ffffff !important;
+  color: #09090b !important;
+  border: 1px solid #e4e4e7 !important;
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 320px !important;
+  max-width: 420px !important;
+  letter-spacing: -0.01em !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.dark .vercel-toast {
+  background: #18181b !important;
+  color: #f4f4f5 !important;
+  border: 1px solid #27272a !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+.vercel-toast-title {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: #09090b !important;
+  letter-spacing: -0.01em !important;
+}
+
+.dark .vercel-toast-title {
+  color: #f4f4f5 !important;
+}
+
+.vercel-toast-description {
+  font-size: 12px !important;
+  color: #71717a !important;
+  margin-top: 2px !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+}
+
+.dark .vercel-toast-description {
+  color: #a1a1aa !important;
+}
+
+.vercel-toast-action {
+  background: #09090b !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+}
+
+.vercel-toast-action:hover {
+  background: #27272a !important;
+}
+
+.dark .vercel-toast-action {
+  background: #ffffff !important;
+  color: #09090b !important;
+}
+
+.dark .vercel-toast-action:hover {
+  background: #e4e4e7 !important;
+}
+
+.vercel-toast-close {
+  color: #71717a !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.15s ease, background 0.15s ease !important;
+}
+
+.vercel-toast-close:hover {
+  opacity: 1 !important;
+  background: #f4f4f5 !important;
+  color: #09090b !important;
+}
+
+.dark .vercel-toast-close:hover {
+  background: #27272a !important;
+  color: #f4f4f5 !important;
+}

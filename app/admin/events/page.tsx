@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Calendar, Plus, Award, Building2, X, ArrowRight } from 'lucide-react';
 
 interface Event {
@@ -83,6 +84,7 @@ function EventsContent() {
         }),
       });
       if (res.ok) {
+        toast.success('Event created successfully');
         setFormName('');
         setFormDesc('');
         setFormLogo('');
@@ -90,7 +92,12 @@ function EventsContent() {
         setFormEnd('');
         setShowCreate(false);
         loadEvents();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to create event');
       }
+    } catch {
+      toast.error('Network error while creating event');
     } finally {
       setCreating(false);
     }

@@ -1,44 +1,47 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
+import { Check, Info, AlertTriangle, AlertCircle, Loader2 } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  let theme: ToasterProps["theme"] = "system"
+  try {
+    const themeContext = useTheme()
+    if (themeContext?.theme) {
+      theme = themeContext.theme as ToasterProps["theme"]
+    }
+  } catch {
+    theme = "system"
+  }
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
+      position="bottom-right"
+      richColors={false}
+      expand={false}
+      visibleToasts={4}
+      gap={8}
+      offset="20px"
+      closeButton
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <Check className="w-4 h-4 text-black dark:text-white flex-shrink-0" strokeWidth={2} />,
+        info: <Info className="w-4 h-4 text-black dark:text-white flex-shrink-0" strokeWidth={2} />,
+        warning: <AlertTriangle className="w-4 h-4 text-black dark:text-white flex-shrink-0" strokeWidth={2} />,
+        error: <AlertCircle className="w-4 h-4 text-black dark:text-white flex-shrink-0" strokeWidth={2} />,
+        loading: <Loader2 className="w-4 h-4 animate-spin text-black dark:text-white flex-shrink-0" strokeWidth={2} />,
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
       toastOptions={{
+        unstyled: false,
         classNames: {
-          toast: "cn-toast",
+          toast: "vercel-toast",
+          title: "vercel-toast-title",
+          description: "vercel-toast-description",
+          actionButton: "vercel-toast-action",
+          cancelButton: "vercel-toast-cancel",
+          closeButton: "vercel-toast-close",
         },
       }}
       {...props}
@@ -46,4 +49,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster }
+export { Toaster, toast }
+
+

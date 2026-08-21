@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Calendar, Award, Users, Plus, ArrowLeft, X, ArrowRight, Building2 } from 'lucide-react';
 import CertificateThumbnail from '@/app/components/CertificateThumbnail';
 
@@ -57,10 +58,16 @@ export default function EventDetailPage() {
         body: JSON.stringify({ name: certName, eventId: id }),
       });
       if (res.ok) {
+        toast.success('Certificate created successfully');
         setCertName('');
         setShowCreate(false);
         loadEvent();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to create certificate');
       }
+    } catch {
+      toast.error('Network error while creating certificate');
     } finally {
       setCreating(false);
     }
@@ -173,10 +180,10 @@ export default function EventDetailPage() {
             <p className="text-xs text-[#6f6b7d] mt-1 mb-4">
               Add a certificate template to start issuing dynamic credentials for this event.
             </p>
-            <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
+            {/* <button className="btn-primary text-xs py-2 px-4" onClick={() => setShowCreate(true)}>
               <Plus className="w-4 h-4" />
               <span>Create Certificate</span>
-            </button>
+            </button> */}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

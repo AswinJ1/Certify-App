@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Building2, Save, Users, ShieldCheck, Mail, CheckCircle2, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import UploadWithRetry from '@/app/components/UploadWithRetry';
 
@@ -31,12 +32,6 @@ export default function OrganizerSettingsPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-
-  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3500);
-  };
 
   const loadSettings = () => {
     fetch('/api/organizer/settings')
@@ -66,13 +61,13 @@ export default function OrganizerSettingsPage() {
         body: JSON.stringify({ name, email, logo: logoUrl || null }),
       });
       if (res.ok) {
-        showToast('Organization settings updated successfully!');
+        toast.success('Organization settings updated successfully');
         loadSettings();
       } else {
-        showToast('Failed to save settings', 'error');
+        toast.error('Failed to save organization settings');
       }
     } catch {
-      showToast('Network error while saving settings', 'error');
+      toast.error('Network error while saving settings');
     } finally {
       setSaving(false);
     }
@@ -88,11 +83,11 @@ export default function OrganizerSettingsPage() {
         body: JSON.stringify({ logo: res[0].ufsUrl }),
       });
       if (resp.ok) {
-        showToast('Organization logo updated!');
+        toast.success('Organization logo updated successfully');
         loadSettings();
       }
     } catch {
-      showToast('Error saving logo', 'error');
+      toast.error('Failed to save organization logo');
     }
   };
 
@@ -116,24 +111,6 @@ export default function OrganizerSettingsPage() {
 
   return (
     <div className="space-y-6 animate-in">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div
-          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg text-xs font-semibold flex items-center gap-2.5 animate-in ${
-            toastMessage.type === 'success'
-              ? 'bg-white border-[#28c76f] text-[#28c76f]'
-              : 'bg-white border-[#ea5455] text-[#ea5455]'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-[#28c76f]" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-[#ea5455]" />
-          )}
-          <span>{toastMessage.text}</span>
-        </div>
-      )}
-
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#2f2b3d] tracking-tight">Organization Profile & Settings</h1>
